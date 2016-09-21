@@ -2,16 +2,14 @@
 -- Indicator_id | vendor_indicator_ident | indicator_info | 
 
 CREATE TABLE IF NOT EXISTS indicators ( indicator_id serial PRIMARY KEY,
-                                       provider_id INTEGER REFERENCES data_provider(provider_id), 
+                                       provider_id BIGINT UNSIGNED REFERENCES data_provider(provider_id), 
                                        vendor_key VARCHAR (25) NOT NULL,
-                                       frequency_id INTEGER REFERENCES release_frequencies(frequency_id),
-                                       country_id INTEGER REFERENCES master_country(country_id),
-                                       indicator_info TEXT);
+                                       frequency_id BIGINT UNSIGNED REFERENCES release_frequencies(frequency_id),
+                                       country_id BIGINT UNSIGNED REFERENCES master_country(country_id),
+                                       indicator_info TEXT, 
+                                       UNIQUE KEY vendor_ix (vendor_key));
                                        
-DO $$
-BEGIN
-	IF NOT EXISTS (SELECT 1 from indicators) THEN 
-	INSERT INTO indicators (provider_id, vendor_key, frequency_id, country_id, indicator_info) VALUES 
+INSERT INTO indicators (provider_id, vendor_key, frequency_id, country_id, indicator_info) VALUES 
 	(1, 'ussurv1055',4,184,'United States, Business Surveys, ISM, Report on Business, Manufacturing, Purchasing Managers Index'),
 	(1, 'ussurv1044',4,184,'United States, Business Surveys, ISM, Report on Business, Non-Manufacturing, Purchasing Managers Index'),
 	(1, 'ussurv1363',4,184,'United States, Business Surveys, ISM Chicago, Chicago Business Barometer, Business Barometer, SA'),
@@ -36,8 +34,5 @@ BEGIN
 	(1, 'usfcst0074',4,184,'Anxious Index'),
 	(1, 'usfcst1745',4,184,'Median Real GDP Growth rates (SAAR)'),
 	(1, 'usfcst1810',4,184,'Mean Real GDP Growth rates (SAAR)');
-ELSE
-	RAISE NOTICE 'TABLE EXISTS WITH ELEMENTS. ENTER NEW ENTRIES MANUALLY';
-END IF;
-END $$;  
+  
                                        

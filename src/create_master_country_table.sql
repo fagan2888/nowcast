@@ -1,16 +1,16 @@
 -- Database: postgres
 -- Create table for all country  
+use economic_database;
 
-CREATE TABLE IF NOT EXISTS master_country ( country_id serial PRIMARY KEY,
-                             country_name varchar (50) NOT NULL,
-                             iso_alpha_2 varchar(2) NOT NULL,
-                             iso_alpha_3 varchar(3) NOT NULL,
-                             iso_number int NOT NULL ) ;
+CREATE TABLE IF NOT EXISTS master_country ( country_id SERIAL PRIMARY KEY, 
+											country_name VARCHAR(50) NOT NULL,
+											iso_alpha_2 VARCHAR(2) NOT NULL,
+											iso_alpha_3 VARCHAR(3) NOT NULL,
+											iso_number INTEGER NOT NULL,
+                                            UNIQUE KEY country_ix (country_name, iso_alpha_2, iso_alpha_3, iso_number)) ;
 
-DO $$
-BEGIN
 INSERT INTO master_country (country_name, iso_alpha_2, iso_alpha_3, iso_number) VALUES 
-('Afghanistan','AF','AFG',4)
+('Afghanistan','AF','AFG',4),
 ('Albania','AL','ALB',8),
 ('Algeria','DZ','DZA',12),
 ('Andorra','AD','AND',20),
@@ -270,14 +270,8 @@ INSERT INTO master_country (country_name, iso_alpha_2, iso_alpha_3, iso_number) 
 ('Aruba','AW','ABW',533),
 ('Netherlands Antilles','AN','ANT',530),
 ('Svalbard','SJ','SJM',744),
-('Ascension','AC','ASC',),
-('Tristan da Cunha','TA','TAA',),
 ('Australian Antarctic Territory','AQ','ATA',10),
 ('Ross Dependency','AQ','ATA',10),
 ('Peter I Island','AQ','ATA',10),
 ('Queen Maud Land','AQ','ATA',10),
 ('British Antarctic Territory','AQ','ATA',10);
-ELSE
-	RAISE NOTICE 'TABLE EXISTS WITH ELEMENTS. ENTER NEW ENTRIES MANUALLY';
-END IF;
-END $$;
