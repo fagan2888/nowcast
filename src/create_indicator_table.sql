@@ -1,13 +1,21 @@
 -- Script to create a table for Indicators
--- Indicator_id | vendor_indicator_ident | indicator_info | 
+-- Indicator_id | vendor_key| frequency_id |  country_id | indicator_info
 
-CREATE TABLE IF NOT EXISTS indicators ( indicator_id serial PRIMARY KEY,
-                                       provider_id BIGINT UNSIGNED REFERENCES data_provider(provider_id), 
-                                       vendor_key VARCHAR (25) NOT NULL,
-                                       frequency_id BIGINT UNSIGNED REFERENCES release_frequencies(frequency_id),
-                                       country_id BIGINT UNSIGNED REFERENCES master_country(country_id),
-                                       indicator_info TEXT, 
-                                       UNIQUE KEY vendor_ix (vendor_key));
+CREATE TABLE IF NOT EXISTS indicators ( indicator_id 	INTEGER NOT NULL AUTO_INCREMENT, 
+										provider_id 	INTEGER NOT NULL, 
+										vendor_key 		VARCHAR (25) NOT NULL,
+										frequency_id 	INTEGER NOT NULL,
+										country_id 		INTEGER NOT NULL,
+										indicator_info 	TEXT, 
+										PRIMARY KEY (indicator_id),
+										CONSTRAINT indicators_ibfk_1 FOREIGN KEY (provider_id)
+											REFERENCES data_provider (provider_id) ON DELETE RESTRICT,
+										CONSTRAINT indicators_ibfk_2 FOREIGN KEY (frequency_id)
+											REFERENCES release_frequencies (frequency_id) ON DELETE RESTRICT,
+										CONSTRAINT indicators_ibfk_3 FOREIGN KEY (country_id)
+											REFERENCES master_country(country_id) ON DELETE RESTRICT,
+										UNIQUE KEY vendor_ix (vendor_key)
+                                        ) ENGINE=INNODB;
                                        
 INSERT INTO indicators (provider_id, vendor_key, frequency_id, country_id, indicator_info) VALUES 
 	(1, 'ussurv1055',4,184,'United States, Business Surveys, ISM, Report on Business, Manufacturing, Purchasing Managers Index'),
@@ -34,5 +42,3 @@ INSERT INTO indicators (provider_id, vendor_key, frequency_id, country_id, indic
 	(1, 'usfcst0074',4,184,'Anxious Index'),
 	(1, 'usfcst1745',4,184,'Median Real GDP Growth rates (SAAR)'),
 	(1, 'usfcst1810',4,184,'Mean Real GDP Growth rates (SAAR)');
-  
-                                       
