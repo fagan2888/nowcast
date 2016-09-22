@@ -1,5 +1,5 @@
 -- Script to create a table for Indicators
--- Indicator_id | vendor_key| frequency_id |  country_id | indicator_info
+-- Indicator_id | vendor_key| frequency_id |  country_id | indicator_info| type of data 
 
 CREATE TABLE IF NOT EXISTS indicators ( indicator_id 	INTEGER NOT NULL AUTO_INCREMENT, 
 										provider_id 	INTEGER NOT NULL, 
@@ -9,11 +9,11 @@ CREATE TABLE IF NOT EXISTS indicators ( indicator_id 	INTEGER NOT NULL AUTO_INCR
 										indicator_info 	TEXT, 
 										PRIMARY KEY (indicator_id),
 										CONSTRAINT indicators_ibfk_1 FOREIGN KEY (provider_id)
-											REFERENCES data_provider (provider_id) ON DELETE RESTRICT,
+											REFERENCES data_provider (provider_id) ON DELETE CASCADE,
 										CONSTRAINT indicators_ibfk_2 FOREIGN KEY (frequency_id)
-											REFERENCES release_frequencies (frequency_id) ON DELETE RESTRICT,
+											REFERENCES release_frequencies (frequency_id) ON DELETE CASCADE,
 										CONSTRAINT indicators_ibfk_3 FOREIGN KEY (country_id)
-											REFERENCES master_country(country_id) ON DELETE RESTRICT,
+											REFERENCES master_country(country_id) ON DELETE CASCADE,
 										UNIQUE KEY vendor_ix (vendor_key)
                                         ) ENGINE=INNODB;
                                        
@@ -41,4 +41,4 @@ INSERT INTO indicators (provider_id, vendor_key, frequency_id, country_id, indic
 	(1, 'usnaac0169',6,184,'United States, Gross Domestic Product, Total, Constant Prices, SA, Chained, AR, USD'),
 	(1, 'usfcst0074',4,184,'Anxious Index'),
 	(1, 'usfcst1745',4,184,'Median Real GDP Growth rates (SAAR)'),
-	(1, 'usfcst1810',4,184,'Mean Real GDP Growth rates (SAAR)');
+	(1, 'usfcst1810',4,184,'Mean Real GDP Growth rates (SAAR)') ON duplicate key update vendor_key = vendor_key;
