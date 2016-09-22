@@ -18,4 +18,4 @@ INSERT INTO release_frequencies (frequency, frequency_text, frequency_type) VALU
 								('60', 'bi-monthly', 'day'),
 								('91', 'quarterly', 'day'),
 								('182', 'bi-annually', 'day'),
-								('365', 'yearly', 'day') ;
+								('365', 'yearly', 'day') ON duplicate key update frequency = frequency, frequency_type = frequency_type;

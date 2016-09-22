@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS data_provider(	provider_id 	INTEGER NOT NULL AUTO_INC
 											UNIQUE provider_ix (provider_name)
                                             ) ENGINE=INNODB;
                                       
-INSERT INTO data_provider(provider_name) VALUES ('MacroBond');      
+INSERT INTO data_provider(provider_name) VALUES ('MacroBond') ON duplicate key update provider_name = provider_name;      
 
 
 

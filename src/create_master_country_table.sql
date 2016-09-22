@@ -277,4 +277,4 @@ INSERT INTO master_country (country_name, iso_alpha_2, iso_alpha_3, iso_number) 
 ('Ross Dependency','AQ','ATA',10),
 ('Peter I Island','AQ','ATA',10),
 ('Queen Maud Land','AQ','ATA',10),
-('British Antarctic Territory','AQ','ATA',10);
+('British Antarctic Territory','AQ','ATA',10) ON DUPLICATE KEY UPDATE country_name = country_name, iso_alpha_2 = iso_alpha_2, iso_alpha_3 = iso_alpha_3, iso_number = iso_number;
