@@ -17,6 +17,6 @@ CREATE TABLE IF NOT EXISTS data ( 	indicator_id 	INTEGER,
                                     ) ENGINE=INNODB;
                                         
 									
-INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage) 
-			VALUES (4, 3000,'2016-03-01', 4, '2016-04-01', '2016-05-01', True, 1) 
-            ON duplicate key update indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True;
+#INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage) 
+#			VALUES (4, 3000,'2016-03-01', 4, '2016-04-01', '2016-05-01', True, 1) 
+ #           ON duplicate key update indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value;
