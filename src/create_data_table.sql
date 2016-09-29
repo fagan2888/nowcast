@@ -13,10 +13,10 @@ CREATE TABLE IF NOT EXISTS data ( 	indicator_id 	INTEGER,
 										REFERENCES indicators(indicator_id) ON DELETE CASCADE,
 									CONSTRAINT data_ibfk_2 FOREIGN KEY (frequency_id) 
 										REFERENCES release_frequencies(frequency_id) ON DELETE CASCADE,
-									UNIQUE data_ix (indicator_id, period_date, release_date, value)
+									UNIQUE data_ix (indicator_id, period_date, value)
                                     ) ENGINE=INNODB;
                                         
 									
-#INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage) 
-#			VALUES (4, 3000,'2016-03-01', 4, '2016-04-01', '2016-05-01', True, 1) 
- #           ON duplicate key update indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value;
+ -- INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage) 
+	--		VALUES (4, 3001,'2016-03-01', 4, '2016-04-01', '2016-05-01', True, ) 
+      --     ON duplicate key update indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage;
