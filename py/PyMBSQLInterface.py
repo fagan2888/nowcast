@@ -23,11 +23,115 @@ class Ms_Db:
             else:
                 raise error.with_traceback(sys.exc_info()[2])
 
-    def add_mb_data(dataseries, indicator_key, current_release, next_release):
-        cursor = cnx.cursor(buffered = True)
-                
-    def tbl_requirements():
+    def tbl_columns():
+        try:
+            cursor = cnx.cursor(buffered = True)
+            column_list = []
+            query = """SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'economic_database' AND TABLE_NAME = 'data';"""
+            cursor.execute(query)
+            for column_name, in cursor:
+                column_list.append(str(column_name))
+            cursor.close()
+        except:
+            cursor.close()
+            raise error.with_traceback(sys.exc_info()[2])
+        return column_list
+    
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.cnx.close()
 
+    def upload_mb_data(dataseries, indicator_key, current_release, next_release):
+        try:
+            cursor = cnx.cursor(buffered = True)
+            df = pd.DataFrame(columns = tbl_columns())
+            dataseries.columns = ['Date', 'value']
+            df = pd.DataFrame(columns = list)
+            df['value'] = ts['value']     
+            df['period_date'] = [datetime.datetime.strftime(i, '%Y-%m-%d') for i in pd.to_datetime(pd.Series(ts['Date']), '%Y-%m-%d')]
+            query = '''SELECT indicator_id FROM indicators where vendor_key = %s'''
+            cursor = cnx.cursor(buffered = True)
+            cursor.execute(query, (indicator_key,))
+            indicator_id = int(cursor.fetchone()[0])  
+            df['indicator_id'] = indicator_id
+            query = '''SELECT frequency_id FROM indicators WHERE indicator_id = %s'''
+            cursor.execute(query, ( indicator_id,))
+            frequency_id = int(cursor.fetchone()[0])
+            df['frequency_id'] = frequency_id
+            df['latest'] = True
+            df['release_date'] = current_release
+            df['next_release'] = next_release
+            # Check if any data exists for this indicator
+            query = '''SELECT vintage FROM data WHERE indicator_id = %s LIMIT 1'''
+            cursor.execute(query, (indicator_id,))
+            if cursor.rowcount == 0:
+                df['vintage'] = 1
+                query = '''INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s) 
+                        ON duplicate key update 
+                        indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage;'''
+                tuple = [tuple(x) for x in df.values]
+                cursor.executemany(query, tuple)
+                cnx.commit()
+            else:
+                # If it exists then we need to ensure the vintage is incremented. If this is a new release date this is fine, if not further logic is required. 
+                # If there is already data there for this indicator and release date we return
+                query = '''select * from data where indicator_id = %s and release_date = %s '''
+                cursor.execute(query, (indicator_id, df['release_date'][0],))
+                if cursor.rowcount > 0:
+                    cursor.close()
+                    cnx.close()
+                    return 
+
+                query = '''select max(release_date) from data where indicator_id = %s '''
+                cursor.execute(query, (indicator_id,))
+                row = cursor.fetchone()
+                # If we have a release date before the last release date we need to insert this restrospectively and change the vintages of a later date accordingly
+                if pd.to_datetime(row) > pd.to_datetime(df['release_date'][0]):
+                    query = '''INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage) 
+                        SELECT %s, %s, %s, %s, %s, %s, %s, (select max(vintage) from data where period_date = %s and release_date > %s)
+                        ON duplicate key update
+                         indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage'''
+            
+                    tuple = [tuple(x) for x in df[['indicator_id', 'value', 'period_date', 'frequency_id', 'release_date', 'next_release', 'latest', 'period_date', 'release_date']].values]
+                    cursor.executemany(query, tuple)
+                    cnx.commit()
+                    query = '''select period_date,release_date from data where release_date = %s'''
+                    cursor.execute(query,  (df['release_date'][0],))
+                    tuple = cursor.fetchall()
+                    query = ''' update data set vintage = vintage + 1 where period_date = %s and release_date > %s'''
+                    cursor.executemany(query, tuple)
+                    cnx.commit()
+
+                elif pd.to_datetime(row) <= pd.to_datetime(df['release_date'][0]):
+                    query = '''select t1.vintage from data t1 left join data t2 on t1.period_date = t2.period_date and t1.vintage < t2.vintage'''
+                    cursor.execute(query)
+                    rows = cursor.fetchall()
+                    df['vintage'] = pd.DataFrame(rows)[0] + 1
+                    df['vintage'] = df['vintage'].fillna(1)
+                    query = '''INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s) 
+                        ON duplicate key update 
+                        indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage;'''
+                    tuple = [tuple(x) for x in df.values]
+                    cursor.executemany(query, tuple)
+                    cnx.commit()
+                else:
+                    print("FOO")
+        
+                query = '''update data set latest = FALSE where indicator_id = %s'''
+                cursor.execute(query, ( indicator_id,))    
+                cnx.commit();    
+
+                query = '''select t1.indicator_id, t1.period_date, t1.release_date, t1.vintage from data t1 left join data t2 on t1.period_date = t2.period_date and t1.vintage < t2.vintage;'''
+                cursor.execute(query)
+                tuple = cursor.fetchall()
+                query = '''update data set latest = True where indicator_id = %s and period_date = %s and release_date = %s and vintage = %s'''
+                cursor.executemany(query, tuple)
+                cnx.commit();    
+                cursor.close()
+        except:
+            raise error.with_traceback(sys.exc_info()[2])    
+    
 
 indicator = 'ussurv1459'
 
