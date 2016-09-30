@@ -29,15 +29,15 @@ try:
     for column_name, in cursor:
         list.append(str(column_name))
         '''
-    ts =  pd.read_csv("U:\\My Documents\\ussurv1459_new.csv")
+    ts =  pd.read_csv("U:\\My Documents\\ussurv1459_mddle.csv")
 
     ts.columns = ['Date', 'value']  
    # tuple = [tuple(x) for x in ts.values]
   #  print(tuple)
    
     indicator_key = 'ussurv1459'
-    current_release = '2016-10-01'
-    next_release = '2016-11-01'
+    current_release = '2016-09-01'
+    next_release = '2016-10-01'
     mb_up = msMBDbInterface(user = 'dbuser', password = 'Melbourne2016', host = 'mslinuxdb01', db_name = 'economic_database')
     mb_up.upload_mb_data(ts, indicator_key,  current_release, next_release)
 

@@ -111,10 +111,10 @@ class msMBDbInterface(msDbInterface):
                 # If we have a release date before the last release date we need to insert this restrospectively and change the vintages of a later date accordingly
                 if pd.to_datetime(row) > pd.to_datetime(df['release_date'][0]):
                     query = '''INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage) 
-                        SELECT %s, %s, %s, %s, %s, %s, %s, (select max(vintage) from data where period_date = %s and release_date > %s)
+                        SELECT %s, %s, %s, %s, %s, %s, %s, (select max(vintage) from data where indicator_id = %s and period_date = %s and release_date > %s)
                         ON duplicate key update
                          indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage'''
-                    tuple = [tuple(x) for x in df[['indicator_id', 'value', 'period_date', 'frequency_id', 'release_date', 'next_release', 'latest', 'period_date', 'release_date']].values]
+                    tuple = [tuple(x) for x in df[['indicator_id', 'value', 'period_date', 'frequency_id', 'release_date', 'next_release', 'latest', 'indicator_id', 'period_date', 'release_date']].values]
                     self.cursor.executemany(query, tuple)
                     self.cnx.commit()
                     query = '''select period_date,release_date from data where release_date = %s'''
@@ -124,10 +124,10 @@ class msMBDbInterface(msDbInterface):
                     self.cursor.executemany(query, tuple)
                     self.cnx.commit()
                 elif pd.to_datetime(row) <= pd.to_datetime(df['release_date'][0]):
-                    query = '''select t1.vintage from data t1 left join data t2 on t1.period_date = t2.period_date and t1.vintage < t2.vintage'''
-                    self.cursor.execute(query)
+                    query = '''select indicator_id, period_date, max(vintage) from data where indicator_id = %s group by period_date'''
+                    self.cursor.execute(query, (indicator_id,))
                     rows = self.cursor.fetchall()
-                    df['vintage'] = pd.DataFrame(rows)[0] + 1
+                    df['vintage'] = pd.DataFrame(rows)[2] + 1
                     df['vintage'] = df['vintage'].fillna(1)
                     query = '''INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s) 
@@ -139,18 +139,15 @@ class msMBDbInterface(msDbInterface):
                 else:
                     print("FOO")
         
-                #query = '''update data set latest = FALSE where indicator_id = %s'''
-                #self.cursor.execute(query, ( indicator_id,))    
-                #self.cnx.commit();    
-                #query = '''select period_date, max(vintage) from data group by period_date'''
-                #self.cursor.execute(query)
-                #tuple = self.cursor.fetchall()
-
-                #print(tuple)
-
-                #query = '''update data set latest = True where period_date = %s and vintage = %s'''
-                #self.cursor.executemany(query, tuple)
-                #self.cnx.commit()   
+                query = '''update data set latest = FALSE where indicator_id = %s'''
+                self.cursor.execute(query, ( indicator_id,))    
+                self.cnx.commit();    
+                query = '''select indicator_id, period_date, max(vintage) from data where indicator_id = %s group by period_date'''
+                self.cursor.execute(query, (indicator_id,))
+                tuple = self.cursor.fetchall()
+                query = '''update data set latest = True where indicator_id = %s and period_date = %s and vintage = %s'''
+                self.cursor.executemany(query, tuple)
+                self.cnx.commit()   
         except:
             print ("Unexpected error:", sys.exc_info()[0])
             raise
