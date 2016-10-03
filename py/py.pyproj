@@ -24,6 +24,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="msDbaseInterface.pyw" />
+    <Compile Include="msLogConfig.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PyMBSQLInterface.py" />
   </ItemGroup>
   <ItemGroup>
