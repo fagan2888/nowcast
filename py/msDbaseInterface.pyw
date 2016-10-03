@@ -153,12 +153,13 @@ class msMBDbInterface(msDbInterface):
                         ON duplicate key update 
                         indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage;'''
                     tuple = [tuple(x) for x in df.values]
-                    self.logger.info('')
+                    self.logger.info('Adding latest vintages')
                     self.cursor.executemany(query, tuple)
                     self.cnx.commit()
                 else:
                     self.logger('Unhandled release date')
         
+                 
                 query = '''update data set latest = FALSE where indicator_id = %s'''
                 self.cursor.execute(query, ( indicator_id,))    
                 self.cnx.commit();    
@@ -166,6 +167,7 @@ class msMBDbInterface(msDbInterface):
                 self.cursor.execute(query, (indicator_id,))
                 tuple = self.cursor.fetchall()
                 query = '''update data set latest = True where indicator_id = %s and period_date = %s and vintage = %s'''
+                self.logger('Ensuring latest vintage is linked with its correct latest flag')
                 self.cursor.executemany(query, tuple)
                 self.cnx.commit()   
         except:
