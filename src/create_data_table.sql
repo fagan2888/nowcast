@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS data ( 	indicator_id 	INTEGER,
 									next_release 	DATE,
 									latest 			BOOLEAN NOT NULL DEFAULT True,
 									vintage 		INTEGER NOT NULL DEFAULT 1,
+                                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+									changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 									CONSTRAINT data_ibfk_1 FOREIGN KEY (indicator_id)
 										REFERENCES indicators(indicator_id) ON DELETE CASCADE,
 									CONSTRAINT data_ibfk_2 FOREIGN KEY (frequency_id) 
