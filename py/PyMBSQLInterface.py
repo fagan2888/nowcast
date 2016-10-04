@@ -36,6 +36,8 @@ try:
         next_release = releaseEntity.Metadata.GetFirstValue("NextReleaseEventTime")
         if 'bea037_76a067rx_m' != str(indicator_key):
             mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
+
+
 except:
     print ("Unexpected error:", sys.exc_info()[0])
     raise

@@ -82,18 +82,24 @@ class msMBDbInterface(msDbInterface):
         try:
             query = '''SELECT vendor_key FROM indicators'''
             self.cursor.execute(query)
-            tuple = self.cursor.fetchall()
-            return list(tuple)
+            series = self.cursor.fetchall()
+            return list(series)
         except:
             print ("Unexpected error retrieving available series:", sys.exc_info()[0])
             raise
+
+    def available_updates(self):
+        current_time = datetime.datetime.strftime(datetime.datetime.now().time(), '%Y-%m-%d %H:%M')
+        query = '''SELECT t2.vendor_key FROM data t1 LEFT JOIN  indicators t2 ON t1.indicator_id = t2.indicator_id WHERE t1.next_release <= %s AND t1.latest = true GROUP BY t2.vendor_key'''
+        self.cursor.execute(query, (current_time,))
+        vendor_keys = list(self.cursor.fetchall())
+        return vendor_keys
 
     def upload_mb_data(self, timeseries, indicator_key, current_release, next_release):
         try:
             table_name = 'data'
             df = pd.DataFrame(columns = self.tbl_columns(table_name))
             df['value'] = pd.Series(timeseries.Values)
-            #df['period_date'] = [datetime.datetime.strftime(i, '%Y-%m-%d') for i in pd.to_datetime(pd.Series(timeseries['Date']))]
             #Formatting the date here from a Pytime object to a string
             df['period_date'] = pd.Series(timeseries.DatesAtStartOfPeriod).apply(lambda x: datetime.datetime.strftime(datetime.datetime(x.year, x.month, x.day, x.hour, x.minute), '%Y-%m-%d %H:%M'))
             query = '''SELECT indicator_id FROM indicators WHERE vendor_key = %s'''
