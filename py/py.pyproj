@@ -27,6 +27,12 @@
     <Compile Include="msLogConfig.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="msMBDbService.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="msMBTest.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PyMBSQLInterface.py" />
   </ItemGroup>
   <ItemGroup>

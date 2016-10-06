@@ -10,29 +10,27 @@ import msLogConfig
 class msDbInterface(object):
 
     def __init__(self, user, password, host, db_name):
-            logging.basicConfig(filename = msLogConfig.log_filename, format=msLogConfig.FORMAT, level = logging.INFO)
-            self.logger = logging.getLogger('dblog')
             self.user = user
             self.password = password
             self.db_name = db_name
             self.host = host
             self.cnx = mysql.connector.connect(user = self.user, password = self.password, host = self.host , database = self.db_name)
-            self.logger.info('Opening onnectinn to database: ' + self.db_name + ' on server ' + self.host)
+            logging.info('Opening connection to database: ' + self.db_name + ' on server ' + self.host)
 
     def connect(self):
         try:
             if not self.cnx.open:
                 self.cnx = mysql.connector.connect(user = self.user, password = self.password, host = self.host , database = self.db_name)
-                self.logger.info('Connectinn to database: ' + self.db_name + 'on server' + self.host)
+                logging.info('Connection not opened on init. Opening connection to database: ' + self.db_name + 'on server' + self.host)
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                self.logger.error(err)
+                logging.error(err)
                 raise
             elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                self.logger.error(err)
+                logging.error(err)
                 raise
             else:
-                self.logger.error(err)
+                logging.error(err)
                 raise error.with_traceback(sys.exc_info()[2])
 
     def getConn(self):
@@ -40,23 +38,23 @@ class msDbInterface(object):
 
     def close(self):
         if self.cnx.open:
-            self.logger.info('Closing connectinn to database: ' + self.db_name + 'on server' + self.host)
+            logging.info('Closing connection to database: ' + self.db_name + 'on server' + self.host)
             self.cnx.close()
 
     def __exit__(self, exc_type, exc_value, traceback):
         if self.cnx.open:
-            self.logger.info('Closing connection to database: ' + self.db_name + 'on server' + self.host)
+            logging.info('Closing connection to database: ' + self.db_name + 'on server' + self.host)
             self.cnx.close()
 
 class msMBDbInterface(msDbInterface):
 
     def __init__(self, user, password, host, db_name):
         msDbInterface.__init__(self, user, password, host, db_name)
-        self.logger.info('Initializing cursor....')
+        logging.info('Initializing cursor....')
         self.cursor = self.cnx.cursor(buffered = True);
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.logger.info('closing cursor.....')
+        logging.info('closing cursor.....')
         self.cursor.close()
 
     def test(self):
@@ -65,11 +63,33 @@ class msMBDbInterface(msDbInterface):
         tuple = self.cursor.fetchall()
         print(tuple)
 
+    def test_input(self):
+        try:
+            logging.info("Testing input..... ")
+            query = '''CREATE TABLE IF NOT EXISTS sandbox ( some_id INTEGER NOT NULL AUTO_INCREMENT,
+									    input_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                        some_text  TEXT,
+                                        PRIMARY KEY(some_id))'''
+            self.cursor.execute(query)
+            query = '''INSERT INTO sandbox(some_text) VALUES("FOO")'''
+            self.cursor.execute(query)
+            logging.info("Testing insert")
+            self.cnx.commit()
+        except:
+            raise
+    
+    def next_release_date(self):
+        logging.info("Retrieving next release date")
+        query = '''select min(next_release) from (select indicator_id, max(next_release) as next_release from data group by indicator_id) as release_times'''
+        self.cursor.execute(query)
+        time = self.cursor.fetchone()
+        return time
+
     def tbl_columns(self, table_name):
         try:
             column_list = []
             query = """SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s;"""
-            self.logger.info('retrieving table structure from ' + table_name)
+            logging.info('retrieving table structure from ' + table_name)
             self.cursor.execute(query, (self.db_name, table_name))
             for column_name, in self.cursor:
                 column_list.append(str(column_name))
@@ -89,10 +109,12 @@ class msMBDbInterface(msDbInterface):
             raise
 
     def available_updates(self):
-        current_time = datetime.datetime.strftime(datetime.datetime.now().time(), '%Y-%m-%d %H:%M')
-        query = '''SELECT t2.vendor_key FROM data t1 LEFT JOIN  indicators t2 ON t1.indicator_id = t2.indicator_id WHERE t1.next_release <= %s AND t1.latest = true GROUP BY t2.vendor_key'''
+        logging.info("Retrieving available updates")
+        current_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M')
+        query = '''SELECT t2.vendor_key FROM (SELECT indicator_id, MAX(next_release) AS next_release FROM data GROUP BY indicator_id) AS release_times LEFT JOIN indicators t2 ON t2.indicator_id = release_times.indicator_id WHERE release_times.next_release <= %s'''
         self.cursor.execute(query, (current_time,))
         vendor_keys = list(self.cursor.fetchall())
+        logging.info("Complete")
         return vendor_keys
 
     def upload_mb_data(self, timeseries, indicator_key, current_release, next_release):
@@ -115,7 +137,7 @@ class msMBDbInterface(msDbInterface):
             df['next_release'] = datetime.datetime.strftime(datetime.datetime(next_release.year, next_release.month, next_release.day, next_release.hour, next_release.minute), '%Y-%m-%d %H:%M')
             df.drop('created_at', axis=1, inplace=True)
             df.drop('changed_at', axis=1, inplace=True)
-            self.logger.info('Finished creating formatted dataframe')
+            logging.info('Finished creating formatted dataframe')
             # Check if any data exists for this indicator
             query = '''SELECT vintage FROM data WHERE indicator_id = %s LIMIT 1'''
             self.cursor.execute(query, (indicator_id,))
@@ -128,19 +150,19 @@ class msMBDbInterface(msDbInterface):
                 df_to_tuple = [tuple(x) for x in df.values]
                 self.cursor.executemany(query, df_to_tuple)
                 self.cnx.commit()
-                self.logger.info('No data exists for indicator, inserting new data with vintage 1')
+                logging.info('No data exists for indicator, inserting new data with vintage 1')
             else:
                 # If it exists then we need to ensure the vintage is incremented. If this is a new release date this is fine, if not further logic is required.
                 # If there is already data there for this indicator and release date we return
                 query = '''SELECT * FROM data WHERE indicator_id = %s AND release_date = %s '''
                 self.cursor.execute(query, (indicator_id, df['release_date'][0],))
                 if self.cursor.rowcount > 0:
-                    self.logger.info("Nothing to be done, data exists in Db")
+                    logging.info("Nothing to be done, data exists in Db")
                     return
                 query = '''select max(release_date) from data where indicator_id = %s '''
                 self.cursor.execute(query, (indicator_id,))
                 row = self.cursor.fetchone()
-                self.logger.info('Data exists for indicator, checking dates and vintage')
+                logging.info('Data exists for indicator, checking dates and vintage')
                 # If we have a release date before the last release date we need to insert this restrospectively and change the vintages of a later date accordingly
                 if pd.to_datetime(row) > pd.to_datetime(df['release_date'][0]):
                     query = '''INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage)
@@ -154,7 +176,7 @@ class msMBDbInterface(msDbInterface):
                     self.cursor.execute(query,  (df['release_date'][0],))
                     query_tuple = self.cursor.fetchall()
                     query = '''UPDATE data SET vintage = vintage + 1 WHERE period_date = %s AND release_date > %s'''
-                    self.logger.info('Inserting data retrospectively, current release date not latest date. Incrementing vintages after')
+                    logging.info('Inserting data retrospectively, current release date not latest date. Incrementing vintages after')
                     self.cursor.executemany(query, query_tuple)
                     self.cnx.commit()
                 elif pd.to_datetime(row) <= pd.to_datetime(df['release_date'][0]):
@@ -168,11 +190,11 @@ class msMBDbInterface(msDbInterface):
                         ON duplicate key UPDATE
                         indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage;'''
                     df_to_tuple = [tuple(x) for x in df.values]
-                    self.logger.info('Adding latest vintages')
+                    logging.info('Adding latest vintages')
                     self.cursor.executemany(query, df_to_tuple)
                     self.cnx.commit()
                 else:
-                    self.logger('Unhandled release date')
+                    logging('Unhandled release date')
 
                 query = '''UPDATE data SET latest = FALSE WHERE indicator_id = %s'''
                 self.cursor.execute(query, ( indicator_id,))
@@ -181,7 +203,7 @@ class msMBDbInterface(msDbInterface):
                 self.cursor.execute(query, (indicator_id,))
                 query_tuple = self.cursor.fetchall()
                 query = '''UPDATE data SET latest = True WHERE indicator_id = %s AND period_date = %s AND vintage = %s'''
-                self.logger('Ensuring latest vintage is linked with its correct latest flag')
+                logging('Ensuring latest vintage is linked with its correct latest flag')
                 self.cursor.executemany(query, query_tuple)
                 self.cnx.commit()
         except:

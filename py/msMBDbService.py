@@ -4,11 +4,12 @@ import win32event
 import win32api
 import servicemanager
 import socket
-import time
+import datetime
 import logging
+import traceback
 from msDbaseInterface import msDbInterface
 from msDbaseInterface import msMBDbInterface
-import win32com.client
+import msLogConfig
 
 class msMBDbService(win32serviceutil.ServiceFramework):
     """A service that polls the database checking when the next release date is"""
@@ -19,32 +20,43 @@ class msMBDbService(win32serviceutil.ServiceFramework):
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-        socket.setdefaulttimeout(60)
-        self.stop_requested = False
+        logging.info("Initiating")
 
     def SvcStop(self):
+        logging.info("Stopping....")
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        win32event.SetEvent(self.stop_event)
-        logging.info('Stopping service ...')
-        self.stop_requested = True
+        win32event.SetEvent(self.hWaitStop)
 
     def SvcDoRun(self):
-        import servicemanager
-        servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED(self._svc_name_, ''))
-        self.timeout = 1080000
+        logging.info("Starting.....")
+        servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, ''))
+        self.timeout = 60000
+        
         while 1:
-             # Wait for service stop signal, if I timeout, loop again
+            logging.info("Stepping into loop") 
+            # Wait for service stop signal, if I timeout, loop again
             rc = win32event.WaitForSingleObject(self.hWaitStop, self.timeout)
             if rc == win32event.WAIT_OBJECT_0:
                 servicemanager.LogInfoMsg("msDbMBService Stopped")
                 break
             else:
-                try:
+                try:     
+                    servicemanager.LogInfoMsg("msDbMBService Querying Db")
+                    logging.info("Opening Db Connection")
                     mb_up = msMBDbInterface(user = 'dbuser', password = 'Melbourne2016', host = 'mslinuxdb01', db_name = 'ms_econ_Db_DEV')
-                    indicator_updates = mb_up.available_updates()
-
-                    if indicator_updates.len() > 0:
-                        logger.info("Updates found")
+                    now = datetime.datetime.now()
+                    next_release = mb_up.next_release_date()[0]
+                    if next_release < now:
+                        indicator_updates = mb_up.available_updates()
+                    else:
+                        indicator_updates = []
+                        time_diff = now - next_release
+                        self.timeout = time_diff.total_seconds() * 1000
+                                            
+                    if len(indicator_updates) > 0:
+                        logging.info("Updates found for:")
+                        c = win32com.client.Dispatch("Macrobond.Connection")
+                        d = c.Database
                         all_series = d.FetchSeries(indicator_updates)
                         for num, indicator_key in enumerate(all_series):
                             ts = all_series[num]
@@ -55,6 +67,7 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                             if 'bea037_76a067rx_m' != str(indicator_key):
                                 mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
                 except:
+                    servicemanager.LogErrorMsg(traceback.format_exc())
                     pass
 
 def ctrlHandler(ctrlType):
