@@ -6,7 +6,25 @@ import win32com.client
 import datetime
 import logging
 
+
+from win32timezone import TimeZoneInfo
+import time
+import pywintypes
+
 try:
+
+
+    pytime = pywintypes.Time(time.time())
+    pytime = (pytime.replace(tzinfo = TimeZoneInfo('GMT Standard Time', True)))
+     
+    pytimetuple = (pytime,)
+    pytimetuplelist = [pytimetuple, pytimetuple, pytimetuple]
+    print(pd.Series([x[0].replace(tzinfo=None) for x in pytimetuplelist]))
+
+    #print(map(lambda x: x.replace(tzinfo = None), pytimetuplelist))
+    #print(pytimetuplelist.replace(tzinfo = None))
+    #print("Done")
+
     #indicator_key = "usnaac0169"
     #c = win32com.client.Dispatch("Macrobond.Connection")
     #d = c.Database
@@ -22,6 +40,7 @@ try:
     #current_release = '2016-08-01'
     #next_release = '2016-09-01'
 
+    '''pywin.datetime()
     c = win32com.client.Dispatch("Macrobond.Connection")
     d = c.Database
     mb_up = msMBDbInterface(user = 'dbuser', password = 'Melbourne2016', host = 'mslinuxdb01', db_name = 'ms_econ_Db_DEV')
@@ -35,7 +54,7 @@ try:
         current_release = releaseEntity.Metadata.GetFirstValue("LastReleaseEventTime")
         next_release = releaseEntity.Metadata.GetFirstValue("NextReleaseEventTime")
         if 'bea037_76a067rx_m' != str(indicator_key):
-            mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
+            mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)'''
 
 except:
     print ("Unexpected error:", sys.exc_info()[0])
