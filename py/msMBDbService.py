@@ -72,6 +72,9 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                             if 'bea037_76a067rx_m' != str(indicator_key):
                                 mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
                             logging.info("Upload complete for indicator %s", str(indicator_key))
+                    else:
+                        logging.info("No updates found, waiting for %s minutes", str(self.timeout / 60000))
+                         
                 except:
                     servicemanager.LogErrorMsg(traceback.format_exc())
                     pass
