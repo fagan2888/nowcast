@@ -4,10 +4,9 @@ from msDbaseInterface import msDbInterface
 from msDbaseInterface import msMBDbInterface
 import win32com.client
 import datetime
+import logging
 
 try:
-
-
     #indicator_key = "usnaac0169"
     #c = win32com.client.Dispatch("Macrobond.Connection")
     #d = c.Database
@@ -35,7 +34,10 @@ try:
     time_diff = datetime.datetime.now() - mb_up.next_release_date()[0]
     print(time_diff.total_seconds() * 1000)
     if len(indicator_updates) > 0:
-        print(len(indicator_updates))
+      #  for i, in indicator_updates:
+      #      print(str(i))
+            logging.info("Updating indicator(s): %s", str(indicator_updates))  
+
     '''indicators = mb_up.return_available_series()
     all_series = d.FetchSeries(indicators)
     for num, indicator_key in enumerate(all_series):

@@ -10,6 +10,7 @@ import traceback
 from msDbaseInterface import msDbInterface
 from msDbaseInterface import msMBDbInterface
 import msLogConfig
+import win32com.client
 
 class msMBDbService(win32serviceutil.ServiceFramework):
     """A service that polls the database checking when the next release date is"""
@@ -42,30 +43,35 @@ class msMBDbService(win32serviceutil.ServiceFramework):
             else:
                 try:     
                     servicemanager.LogInfoMsg("msDbMBService Querying Db")
-                    logging.info("Opening Db Connection")
+                    logging.info("Opening Db Connection within Service")
                     mb_up = msMBDbInterface(user = 'dbuser', password = 'Melbourne2016', host = 'mslinuxdb01', db_name = 'ms_econ_Db_DEV')
                     now = datetime.datetime.now()
                     next_release = mb_up.next_release_date()[0]
                     if next_release < now:
                         indicator_updates = mb_up.available_updates()
                     else:
+                        # No updates, wait until next release time until checking again.
                         indicator_updates = []
                         time_diff = now - next_release
-                        self.timeout = time_diff.total_seconds() * 1000
+                        error_margin = 600000
+                        self.timeout = time_diff.total_seconds() * 1000 + error_margin
                                             
                     if len(indicator_updates) > 0:
-                        logging.info("Updates found for:")
+                        logging.info("Updates found for: %s", str(indicator_updates))
                         c = win32com.client.Dispatch("Macrobond.Connection")
                         d = c.Database
                         all_series = d.FetchSeries(indicator_updates)
+                        logging.info("Series fetched for indicators")
                         for num, indicator_key in enumerate(all_series):
                             ts = all_series[num]
                             releaseName = ts.Metadata.GetFirstValue("Release")
                             releaseEntity = d.FetchOneEntity(releaseName)
                             current_release = releaseEntity.Metadata.GetFirstValue("LastReleaseEventTime")
                             next_release = releaseEntity.Metadata.GetFirstValue("NextReleaseEventTime")
+                            logging.info("Uploading data for indicator %s", str(indicator_key))
                             if 'bea037_76a067rx_m' != str(indicator_key):
                                 mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
+                            logging.info("Upload complete for indicator %s", str(indicator_key))
                 except:
                     servicemanager.LogErrorMsg(traceback.format_exc())
                     pass

@@ -26,7 +26,9 @@
 -- create database ms_econ_Db_UAT;
 -- select t1.indicator_id, t1.period_date, t1.release_date, t1.vintage  from data t1 left join data t2 on t1.period_date = t2.period_date and t1.release_date = t2.release_date and t2.vintage < t1.vintage
 
-select indicator_id, (next_release) from data
+select * from (select indicator_id, max(next_release) as next_release from data group by indicator_id) as release_times where next_release <= '2016-10-06';
+
+-- SELECT t2.vendor_key FROM data t1 LEFT JOIN  indicators t2 ON t1.indicator_id = t2.indicator_id WHERE t1.next_release <=  AND t1.latest = true GROUP BY t2.vendor_key
 -- select * from data order by period_date;
 -- select t1.indicator_id, t1.period_date, t1.release_date, t1.value, t1.vintage  from data t1 left join data t2 on t1.period_date = t2.period_date and t1.vintage < t2.vintage order by period_date;
 -- select max(vintage) from data where indicator_id = 4 group by period_date
