@@ -123,7 +123,7 @@ class msMBDbInterface(msDbInterface):
             df = pd.DataFrame(columns = self.tbl_columns(table_name))
             df['value'] = pd.Series(timeseries.Values)
             #Formatting the date here from a Pytime object to a string
-            df['period_date'] = pd.Series(timeseries.DatesAtStartOfPeriod).apply(lambda x: datetime.datetime.strftime(datetime.datetime(x.year, x.month, x.day, x.hour, x.minute), '%Y-%m-%d %H:%M'))
+            df['period_date'] = pd.Series(timeseries.DatesAtEndOfPeriod).apply(lambda x: datetime.datetime.strftime(datetime.datetime(x.year, x.month, x.day, x.hour, x.minute), '%Y-%m-%d %H:%M'))
             query = '''SELECT indicator_id FROM indicators WHERE vendor_key = %s'''
             self.cursor.execute(query, (indicator_key,))
             indicator_id = int(self.cursor.fetchone()[0])

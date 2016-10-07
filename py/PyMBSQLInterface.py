@@ -22,23 +22,11 @@ try:
     #current_release = '2016-08-01'
     #next_release = '2016-09-01'
 
-    #c = win32com.client.Dispatch("Macrobond.Connection")
-    #d = c.Database
+    c = win32com.client.Dispatch("Macrobond.Connection")
+    d = c.Database
     mb_up = msMBDbInterface(user = 'dbuser', password = 'Melbourne2016', host = 'mslinuxdb01', db_name = 'ms_econ_Db_DEV')
-    if mb_up.next_release_date()[0] < datetime.datetime.now():
-        indicator_updates = mb_up.available_updates()
-        print(indicator_updates)
-    else:
-        indicator_updates = []
 
-    time_diff = datetime.datetime.now() - mb_up.next_release_date()[0]
-    print(time_diff.total_seconds() * 1000)
-    if len(indicator_updates) > 0:
-      #  for i, in indicator_updates:
-      #      print(str(i))
-            logging.info("Updating indicator(s): %s", str(indicator_updates))  
-
-    '''indicators = mb_up.return_available_series()
+    indicators = mb_up.return_available_series()
     all_series = d.FetchSeries(indicators)
     for num, indicator_key in enumerate(all_series):
         ts = all_series[num]
@@ -47,8 +35,7 @@ try:
         current_release = releaseEntity.Metadata.GetFirstValue("LastReleaseEventTime")
         next_release = releaseEntity.Metadata.GetFirstValue("NextReleaseEventTime")
         if 'bea037_76a067rx_m' != str(indicator_key):
-            mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)'''
-
+            mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
 
 except:
     print ("Unexpected error:", sys.exc_info()[0])
