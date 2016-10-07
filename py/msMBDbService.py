@@ -32,16 +32,16 @@ class msMBDbService(win32serviceutil.ServiceFramework):
         logging.info("Starting.....")
         servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, ''))
         self.timeout = 60000
-        
+
         while 1:
-            logging.info("Stepping into loop") 
+            logging.info("Stepping into loop")
             # Wait for service stop signal, if I timeout, loop again
             rc = win32event.WaitForSingleObject(self.hWaitStop, self.timeout)
             if rc == win32event.WAIT_OBJECT_0:
                 servicemanager.LogInfoMsg("msDbMBService Stopped")
                 break
             else:
-                try:     
+                try:
                     servicemanager.LogInfoMsg("msDbMBService Querying Db")
                     logging.info("Opening Db Connection within Service")
                     mb_up = msMBDbInterface(user = 'dbuser', password = 'Melbourne2016', host = 'mslinuxdb01', db_name = 'ms_econ_Db_DEV')
@@ -55,7 +55,7 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                         time_diff = now - next_release
                         error_margin = 600000
                         self.timeout = time_diff.total_seconds() * 1000 + error_margin
-                                            
+
                     if len(indicator_updates) > 0:
                         logging.info("Updates found for: %s", str(indicator_updates))
                         c = win32com.client.Dispatch("Macrobond.Connection")
