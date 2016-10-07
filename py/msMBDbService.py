@@ -52,7 +52,7 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                     else:
                         # No updates, wait until next release time until checking again.
                         indicator_updates = []
-                        time_diff = now - next_release
+                        time_diff = next_release - now
                         error_margin = 600000
                         self.timeout = time_diff.total_seconds() * 1000 + error_margin
 
