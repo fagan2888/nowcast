@@ -16,7 +16,7 @@ try:
 
     '''    pytime = pywintypes.Time(time.time())
     pytime = (pytime.replace(tzinfo = TimeZoneInfo('GMT Standard Time', True)))
-     
+
     pytimetuple = (pytime,)
     pytimetuplelist = [pytimetuple, pytimetuple, pytimetuple]
     print(pd.Series([x[0].replace(tzinfo=None) for x in pytimetuplelist]).apply(lambda x: datetime.datetime.strftime(datetime.datetime(x.year, x.month, x.day, x.hour, x.minute), '%Y-%m-%d %H:%M')))
@@ -46,15 +46,24 @@ try:
 
     indicators = mb_up.return_available_series()
     all_series = d.FetchSeries(indicators)
+    print("HEERE!!")
     for num, indicator_key in enumerate(all_series):
+        print("Num: {0} Indicator: {1}".format(num, indicator_key))
         ts = all_series[num]
         releaseName = ts.Metadata.GetFirstValue("Release")
         releaseEntity = d.FetchOneEntity(releaseName)
+
         current_release = releaseEntity.Metadata.GetFirstValue("LastReleaseEventTime")
+        print("\nCurrent: {0}".format(current_release))
         next_release = releaseEntity.Metadata.GetFirstValue("NextReleaseEventTime")
+        print("\nNext: {0}".format(current_release))
         if 'bea037_76a067rx_m' != str(indicator_key):
+            print("\nAccess second part")
+            #mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
             mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
 
 except:
     print ("Unexpected error:", sys.exc_info()[0])
     raise
+
+print("Got through")

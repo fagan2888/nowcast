@@ -77,7 +77,7 @@ class msMBDbInterface(msDbInterface):
             self.cnx.commit()
         except:
             raise
-    
+
     def next_release_date(self):
         logging.info("Retrieving next release date")
         query = '''select min(next_release) from (select indicator_id, max(next_release) as next_release from data group by indicator_id) as release_times'''
@@ -123,7 +123,7 @@ class msMBDbInterface(msDbInterface):
             df = pd.DataFrame(columns = self.tbl_columns(table_name))
             df['value'] = pd.Series(timeseries.Values)
             #Formatting the date here from a Pytime object to a string
-            df['period_date'] = pd.Series([t[0].replace(tzinfo=None) for t in timeseries.DatesAtEndOfPeriod]).apply(lambda x: datetime.datetime.strftime(datetime.datetime(x.year, x.month, x.day, x.hour, x.minute), '%Y-%m-%d %H:%M'))
+            df['period_date'] = pd.Series([t.replace(tzinfo=None) for t in timeseries.DatesAtEndOfPeriod]).apply(lambda x: datetime.datetime.strftime(datetime.datetime(x.year, x.month, x.day, x.hour, x.minute), '%Y-%m-%d %H:%M'))
             query = '''SELECT indicator_id FROM indicators WHERE vendor_key = %s'''
             self.cursor.execute(query, (indicator_key,))
             indicator_id = int(self.cursor.fetchone()[0])
