@@ -1,7 +1,6 @@
 -- Database: postgres
 -- Create table for all country  with a unique country id, name, iso characters  and iso number
 -- Country_id | country_name | iso_alpha_2 (2-character ISO code) | iso_alpha_3 (3 digiti ISO code) | iso_number
-use ms_econ_Db_DEV;
 
 CREATE TABLE IF NOT EXISTS master_country ( country_id 		INTEGER NOT NULL AUTO_INCREMENT, 
 											country_name 	VARCHAR(50) NOT NULL,
