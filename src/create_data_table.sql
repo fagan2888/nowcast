@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS data ( 	indicator_id 	INTEGER,
 										REFERENCES indicators(indicator_id) ON DELETE CASCADE,
 									CONSTRAINT data_ibfk_2 FOREIGN KEY (frequency_id) 
 										REFERENCES release_frequencies(frequency_id) ON DELETE CASCADE,
-									UNIQUE data_ix (indicator_id, period_date, value),
-                                    PRIMARY KEY (indicator_id, period_date, value, release_date)
+									PRIMARY KEY (indicator_id, period_date, value, release_date),
+									UNIQUE data_ix (indicator_id, period_date, value)
                                     ) ENGINE=INNODB;
                                         
 									
