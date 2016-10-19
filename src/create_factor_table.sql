@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS factors ( 	run_id 			INTEGER NOT NULL,
 											REFERENCES run_table(run_id) ON DELETE CASCADE,
 										CONSTRAINT factors_ibfk_2 FOREIGN KEY (factor_id)
 											REFERENCES factor_type(factor_id) ON DELETE CASCADE,
-										PRIMARY KEY (run_id, factor_value, factor_id)
+										PRIMARY KEY (run_id, factor_value, factor_id),
+                                        UNIQUE (run_id, factor_value, factor_id)
 									) ENGINE=INNODB;
                                         
 										
