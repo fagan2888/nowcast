@@ -194,7 +194,7 @@ class msMBDbInterface(msDbInterface):
                     self.cursor.executemany(query, df_to_tuple)
                     self.cnx.commit()
                 else:
-                    logging('Unhandled release date')
+                    logging.info('Unhandled release date')
 
                 query = '''UPDATE data SET latest = FALSE WHERE indicator_id = %s'''
                 self.cursor.execute(query, ( indicator_id,))
@@ -203,7 +203,7 @@ class msMBDbInterface(msDbInterface):
                 self.cursor.execute(query, (indicator_id,))
                 query_tuple = self.cursor.fetchall()
                 query = '''UPDATE data SET latest = True WHERE indicator_id = %s AND period_date = %s AND vintage = %s'''
-                logging('Ensuring latest vintage is linked with its correct latest flag')
+                logging.info('Ensuring latest vintage is linked with its correct latest flag')
                 self.cursor.executemany(query, query_tuple)
                 self.cnx.commit()
         except:
