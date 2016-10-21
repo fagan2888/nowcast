@@ -128,10 +128,10 @@ class msMBDbInterface(msDbInterface):
             self.cursor.execute(query, (indicator_key,))
             indicator_id = int(self.cursor.fetchone()[0])
             df['indicator_id'] = indicator_id
-            query = '''SELECT frequency_id FROM indicators WHERE indicator_id = %s'''
-            self.cursor.execute(query, ( indicator_id,))
-            frequency_id = int(self.cursor.fetchone()[0])
-            df['frequency_id'] = frequency_id
+            #query = '''SELECT frequency_id FROM indicators WHERE indicator_id = %s'''
+            #self.cursor.execute(query, ( indicator_id,))
+            #frequency_id = int(self.cursor.fetchone()[0])
+            #df['frequency_id'] = frequency_id
             df['latest'] = True
             df['release_date'] = datetime.datetime.strftime(datetime.datetime(current_release.year, current_release.month, current_release.day, current_release.hour, current_release.minute), '%Y-%m-%d %H:%M')
             df['next_release'] = datetime.datetime.strftime(datetime.datetime(next_release.year, next_release.month, next_release.day, next_release.hour, next_release.minute), '%Y-%m-%d %H:%M')
@@ -143,7 +143,7 @@ class msMBDbInterface(msDbInterface):
             self.cursor.execute(query, (indicator_id,))
             if self.cursor.rowcount == 0:
                 df['vintage'] = 1
-                query = '''INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage)
+                query = '''INSERT INTO data(indicator_id, value, period_date, release_date, next_release, latest, vintage)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                         ON duplicate key update
                         indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage;'''
@@ -165,11 +165,11 @@ class msMBDbInterface(msDbInterface):
                 logging.info('Data exists for indicator, checking dates and vintage')
                 # If we have a release date before the last release date we need to insert this restrospectively and change the vintages of a later date accordingly
                 if pd.to_datetime(row) > pd.to_datetime(df['release_date'][0]):
-                    query = '''INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage)
-                        SELECT %s, %s, %s, %s, %s, %s, %s, (SELECT ifnull((SELECT MIN(vintage) FROM data WHERE indicator_id = %s AND period_date = %s AND release_date > %s), -1))
+                    query = '''INSERT INTO data(indicator_id, value, period_date, release_date, next_release, latest, vintage)
+                        SELECT %s, %s, %s, %s, %s, %s, (SELECT ifnull((SELECT MIN(vintage) FROM data WHERE indicator_id = %s AND period_date = %s AND release_date > %s), -1))
                         ON duplicate key UPDATE
                          indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage'''
-                    df_to_tuple = [tuple(x) for x in df[['indicator_id', 'value', 'period_date', 'frequency_id', 'release_date', 'next_release', 'latest', 'indicator_id', 'period_date', 'release_date']].values]
+                    df_to_tuple = [tuple(x) for x in df[['indicator_id', 'value', 'period_date', 'release_date', 'next_release', 'latest', 'indicator_id', 'period_date', 'release_date']].values]
                     self.cursor.executemany(query, df_to_tuple)
                     self.cnx.commit()
                     query = '''select period_date,release_date from data where release_date = %s'''
@@ -185,8 +185,8 @@ class msMBDbInterface(msDbInterface):
                     rows = self.cursor.fetchall()
                     df['vintage'] = pd.DataFrame(rows)[2] + 1
                     df['vintage'] = df['vintage'].fillna(1)
-                    query = '''INSERT INTO data(indicator_id, value, period_date, frequency_id, release_date, next_release, latest, vintage)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    query = '''INSERT INTO data(indicator_id, value, period_date, release_date, next_release, latest, vintage)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                         ON duplicate key UPDATE
                         indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage;'''
                     df_to_tuple = [tuple(x) for x in df.values]

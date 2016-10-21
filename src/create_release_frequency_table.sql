@@ -3,19 +3,22 @@
 
 
 CREATE TABLE IF NOT EXISTS release_frequencies(	frequency_id 	INTEGER NOT NULL AUTO_INCREMENT, 
-												frequency 		INTEGER NOT NULL, 
+												frequency 	VARCHAR(2) NOT NULL , 
                                                 frequency_text 	VARCHAR(15) NOT NULL, 
-                                                frequency_type 	VARCHAR(10) NOT NULL, 
+                                                frequency_info 	TEXT NOT NULL, 
                                                 PRIMARY KEY (frequency_id),
-                                                UNIQUE frequency_ix (frequency, frequency_type)
+                                                UNIQUE release_frequencies_ix(frequency)
                                                 ) ENGINE=INNODB;
 
-INSERT INTO release_frequencies (frequency, frequency_text, frequency_type) VALUES 
-								('1', 'daily', 'day'),
-								('7', 'bweekly', 'day'),
-								('14', 'bi-weekly', 'day'),
-								('30', 'monthly', 'day'),
-								('60', 'bi-monthly', 'day'),
-								('91', 'quarterly', 'day'),
-								('182', 'bi-annually', 'day'),
-								('365', 'yearly', 'day') ON duplicate key update frequency = frequency, frequency_type = frequency_type;
+INSERT INTO release_frequencies (frequency, frequency_text, frequency_info) VALUES
+								('M', 'Minute', 'Release frequency of 1 minute/ every minute'),
+								('H', 'Hourly', 'Release frequency of 1 hour'),
+                                ('d', 'Daily', 'Release frequency of 1 day'),
+								('w', 'Weekly', 'Release frequency of 1 week'),
+								('2w', 'Bi-Weekly', 'Release frequency of two weeks'),
+                                ('3w', 'Tri-Weekly', 'Release frequency of three weeks'),
+								('m', 'Monthly', 'Release frequency of 1 month '),
+								('2m', 'Bi-Monthly', 'Release frequency of 2 months'),
+                                ('6m', 'Half-Yearly', 'Release frequency every 6 months'),
+                                ('q', 'Quaterly', 'Release frequency every quarter'),
+								('y', 'Yearly', 'Release frequency every year') ON duplicate key update frequency_id = frequency_id, frequency = frequency;
