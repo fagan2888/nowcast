@@ -26,7 +26,9 @@
 -- create database ms_econ_Db_UAT;
 -- select t1.indicator_id, t1.period_date, t1.release_date, t1.vintage  from data t1 left join data t2 on t1.period_date = t2.period_date and t1.release_date = t2.release_date and t2.vintage < t1.vintage
 
+select * from data_series_v where vendor_key = "ussurv0354";
 
+SELECT t4.iso_alpha_2, t2.vendor_key, t2.indicator_info, t1.value, t1.period_date, t1.release_date, t1.next_release, t3.frequency, t1.latest, t1.vintage FROM data t1 LEFT JOIN (indicators t2) ON  (t1.indicator_id = t2.indicator_id) LEFT JOIN (release_frequencies t3) ON(t2.frequency_id = t3.frequency_id) LEFT JOIN (master_country t4) USING(country_id);
 -- SELECT t2.vendor_key FROM data t1 LEFT JOIN  indicators t2 ON t1.indicator_id = t2.indicator_id WHERE t1.next_release <=  AND t1.latest = true GROUP BY t2.vendor_key
 -- select * from data order by period_date;
 -- select t1.indicator_id, t1.period_date, t1.release_date, t1.value, t1.vintage  from data t1 left join data t2 on t1.period_date = t2.period_date and t1.vintage < t2.vintage order by period_date;
