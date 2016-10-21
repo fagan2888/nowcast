@@ -123,7 +123,7 @@ class msMBDbInterface(msDbInterface):
             df = pd.DataFrame(columns = self.tbl_columns(table_name))
             df['value'] = pd.Series(timeseries.Values)
             #Formatting the date here from a Pytime object to a string
-            df['period_date'] = pd.Series([t[0].replace(tzinfo=None) for t in timeseries.DatesAtEndOfPeriod]).apply(lambda x: datetime.datetime.strftime(datetime.datetime(x.year, x.month, x.day, x.hour, x.minute), '%Y-%m-%d %H:%M'))
+            df['period_date'] = pd.Series([t.replace(tzinfo=None) for t in timeseries.DatesAtEndOfPeriod]).apply(lambda x: datetime.datetime.strftime(datetime.datetime(x.year, x.month, x.day, x.hour, x.minute), '%Y-%m-%d %H:%M'))
             query = '''SELECT indicator_id FROM indicators WHERE vendor_key = %s'''
             self.cursor.execute(query, (indicator_key,))
             indicator_id = int(self.cursor.fetchone()[0])
@@ -144,7 +144,7 @@ class msMBDbInterface(msDbInterface):
             if self.cursor.rowcount == 0:
                 df['vintage'] = 1
                 query = '''INSERT INTO data(indicator_id, value, period_date, release_date, next_release, latest, vintage)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                         ON duplicate key update
                         indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage;'''
                 df_to_tuple = [tuple(x) for x in df.values]
