@@ -25,11 +25,26 @@
 
 -- create database ms_econ_Db_UAT;
 -- select t1.indicator_id, t1.period_date, t1.release_date, t1.vintage  from data t1 left join data t2 on t1.period_date = t2.period_date and t1.release_date = t2.release_date and t2.vintage < t1.vintage
+use ms_econ_Db_DEV;
+/*select * from data_series_v where frequency = 'q';
+select * from indicator_types order by indicator_type_id;
+select * from presentation_units order by unit_id;
 
-select * from data_series_v where vendor_key = "ussurv0354";
+SELECT t4.iso_alpha_2, t2.vendor_key, t2.indicator_info, t1.value, t1.period_date, t1.release_date, t1.next_release, t1.latest, t1.vintage, t3.frequency, t5.indicator_origin, t6.presentation_unit FROM data t1 LEFT JOIN (indicators t2) ON  (t1.indicator_id = t2.indicator_id) LEFT JOIN (release_frequencies t3) ON(t2.frequency_id = t3.frequency_id) LEFT JOIN (indicator_types t5) ON (t2.indicator_type = t5.indicator_type_id) LEFT JOIN (presentation_units t6) ON (t2.indicator_presentation = t6.unit_id) LEFT JOIN (master_country t4) USING(country_id);
 
-SELECT t4.iso_alpha_2, t2.vendor_key, t2.indicator_info, t1.value, t1.period_date, t1.release_date, t1.next_release, t3.frequency, t1.latest, t1.vintage FROM data t1 LEFT JOIN (indicators t2) ON  (t1.indicator_id = t2.indicator_id) LEFT JOIN (release_frequencies t3) ON(t2.frequency_id = t3.frequency_id) LEFT JOIN (master_country t4) USING(country_id);
--- SELECT t2.vendor_key FROM data t1 LEFT JOIN  indicators t2 ON t1.indicator_id = t2.indicator_id WHERE t1.next_release <=  AND t1.latest = true GROUP BY t2.vendor_key
+
+*/
+select * from forecast_data;
+SELECT t1.period_date, t1.mean_forecast, t2.vendor_key, t3.forecast_type, t1.run_id, t5.timestamp from forecast_data t1 LEFT JOIN (indicators t2) ON (t2.indicator_id = t1.indicator_id) LEFT JOIN (forecast_types t3) ON (t3.forecast_type_id = t1.forecast_type_id) LEFT JOIN (run_table t4) ON (t4.run_id > t1.run_id) LEFT JOIN (run_table t5) ON (t5.run_id = t1.run_id) where t4.timestamp is NULL;
+select t1.run_id, t2.variable_name, t1.variable_value from run_info t1 LEFT JOIN (control_variables t2) ON (t2.variable_id = t1.variable_id);
+
+SELECT 
+MAX(CASE WHEN t3.fieldname = 'variable_name' THEN t3.fieldvalue ELSE NULL END) AS variable_name,
+MAX(CASE WHEN t3.fieldname = 'variable_value' THEN t3.fieldvalue ELSE NULL END) AS variable_value,
+FROM (select t1.run_id, t2.variable_name, t1.variable_value from run_info t1 LEFT JOIN (control_variables t2) ON (t2.variable_id = t1.variable_id)) AS t3
+GROUP BY t3.run_id;
+
+
 -- select * from data order by period_date;
 -- select t1.indicator_id, t1.period_date, t1.release_date, t1.value, t1.vintage  from data t1 left join data t2 on t1.period_date = t2.period_date and t1.vintage < t2.vintage order by period_date;
 -- select max(vintage) from data where indicator_id = 4 group by period_date

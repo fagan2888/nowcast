@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS forecast_type( 	forecast_type_id INTEGER NOT NULL AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS forecast_types( 	forecast_type_id INTEGER NOT NULL AUTO_INCREMENT,
 											forecast_type VARCHAR(25),
                                             forecast_info TEXT,
                                             PRIMARY KEY(forecast_type_id),

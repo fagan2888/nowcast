@@ -196,7 +196,7 @@ class msMBDbInterface(msDbInterface):
                 else:
                     logging.info('Unhandled release date')
 
-                query = '''UPDATE data SET latest = FALSE WHERE indicator_id = %s'''
+                query = '''UPDATE data SET latest = FALSE WHERE latest = TRUE AND indicator_id = %s'''
                 self.cursor.execute(query, ( indicator_id,))
                 self.cnx.commit();
                 query = '''SELECT indicator_id, period_date, MAX(vintage) FROM data WHERE indicator_id = %s GROUP BY period_date'''

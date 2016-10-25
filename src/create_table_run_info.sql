@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS run_info(run_id INTEGER NOT NULL,
 									CONSTRAINT run_info_ibfk_2 FOREIGN KEY (variable_id)
 										REFERENCES control_variables(variable_id) ON DELETE CASCADE,
 									PRIMARY KEY (run_id, variable_id),
-                                    UNIQUE run_info_ix (run_id, variable_id)
+                                    UNIQUE (run_id, variable_id)
                                     )ENGINE = INNODB;

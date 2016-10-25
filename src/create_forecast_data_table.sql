@@ -6,8 +6,6 @@ CREATE TABLE IF NOT EXISTS forecast_data ( 	indicator_id 	INTEGER,
 											mean_forecast 	REAL NOT NULL,
 											hi_forecast		REAL NOT NULL,
 											run_id 		INTEGER NOT NULL,
-											created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-											changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 											CONSTRAINT forecast_data_ibfk_1 FOREIGN KEY (indicator_id)
 												REFERENCES indicators(indicator_id) ON DELETE CASCADE,
 											CONSTRAINT forecast_data_ibfk_2 FOREIGN KEY (run_id) 

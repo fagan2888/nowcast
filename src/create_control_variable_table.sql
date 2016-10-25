@@ -4,7 +4,8 @@
 CREATE TABLE IF NOT EXISTS control_variables( 	variable_id 			INTEGER NOT NULL AUTO_INCREMENT,
 												variable_name			VARCHAR(20) NOT NULL,
                                                 variable_description	TEXT,
-												PRIMARY KEY(variable_id, variable_name)
+												PRIMARY KEY(variable_id, variable_name),
+                                                UNIQUE (variable_id, variable_name)
                                              ) ENGINE=INNODB;
 									
 INSERT INTO control_variables (variable_name, variable_description) VALUES
@@ -13,8 +14,8 @@ INSERT INTO control_variables (variable_name, variable_description) VALUES
                                 ("qlag", "The lag for the factor components"),
                                 ("Nx", "Number of Factors"),
                                 ("modelType", "The type of the model"),
-                                ("high_scenario", "The high range of the estimate in standard deviations"),
-                                ("low_scenario", "The low range of the estimate in standard deviations");
+                                ("high", "The high range of the estimate in standard deviations"),
+                                ("low", "The low range of the estimate in standard deviations");
                                 
                                 
                                 
