@@ -21,4 +21,4 @@ INSERT INTO release_frequencies (frequency, frequency_text, frequency_info) VALU
 								('2m', 'Bi-Monthly', 'Release frequency of 2 months'),
                                 ('6m', 'Half-Yearly', 'Release frequency every 6 months'),
                                 ('q', 'Quaterly', 'Release frequency every quarter'),
-								('y', 'Yearly', 'Release frequency every year') ON duplicate key update frequency_id = frequency_id, frequency = frequency;
+								('y', 'Yearly', 'Release frequency every year') ON duplicate key update frequency = frequency;

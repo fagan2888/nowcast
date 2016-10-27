@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS forecast_data ( 	indicator_id 	INTEGER,
 											CONSTRAINT forecast_data_ibfk_2 FOREIGN KEY (run_id) 
 												REFERENCES run_table(run_id) ON DELETE CASCADE,
 											CONSTRAINT forecast_data_ibfk_3 FOREIGN KEY (forecast_type_id)
-												REFERENCES forecast_type (forecast_type_id) ON DELETE CASCADE,
+												REFERENCES forecast_types (forecast_type_id) ON DELETE CASCADE,
 										PRIMARY KEY (indicator_id, period_date, mean_forecast, run_id),
 										UNIQUE forecast_data_ix (indicator_id, period_date, mean_forecast, run_id)
 										) ENGINE=INNODB;

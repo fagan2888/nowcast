@@ -19,11 +19,11 @@ CREATE TABLE IF NOT EXISTS indicators ( indicator_id 	INTEGER NOT NULL AUTO_INCR
 										CONSTRAINT indicators_ibfk_4 FOREIGN KEY(indicator_type)
 											REFERENCES indicator_types(indicator_type_id),
 										CONSTRAINT indicators_ibfk_5 FOREIGN KEY(indicator_presentation)
-											REFERENCES presentation_units(unit_id)
+											REFERENCES presentation_units(unit_id),
 										UNIQUE KEY vendor_ix (vendor_key)
                                         ) ENGINE=INNODB;
                                        
-INSERT INTO indicators (provider_id, vendor_key, indicator_type, frequency_id, country_id, indicator_info, indicator_type, indicator_presentation) VALUES 
+INSERT INTO indicators (provider_id, vendor_key, frequency_id, country_id, indicator_info, indicator_type, indicator_presentation) VALUES 
 	(1, 'ussurv1055',7,184,'United States, Business Surveys, ISM, Report on Business, Manufacturing, Purchasing Managers Index', 1, 1),
 	(1, 'ussurv1044',7,184,'United States, Business Surveys, ISM, Report on Business, Non-Manufacturing, Purchasing Managers Index', 1, 1),
 	(1, 'ussurv1363',7,184,'United States, Business Surveys, ISM Chicago, Chicago Business Barometer, Business Barometer, SA', 1, 5),

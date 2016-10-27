@@ -25,7 +25,8 @@
 
 -- create database ms_econ_Db_UAT;
 -- select t1.indicator_id, t1.period_date, t1.release_date, t1.vintage  from data t1 left join data t2 on t1.period_date = t2.period_date and t1.release_date = t2.release_date and t2.vintage < t1.vintage
-use ms_econ_Db_DEV;
+
+select distinct vendor_key, next_release, indicator_info from data_series_v t1 where latest = true and next_release = (select min(t2.next_release) from data_series_v t2 where t1.vendor_key = t2.vendor_key) order by next_release asc;
 /*select * from data_series_v where frequency = 'q';
 select * from indicator_types order by indicator_type_id;
 select * from presentation_units order by unit_id;
@@ -34,17 +35,19 @@ SELECT t4.iso_alpha_2, t2.vendor_key, t2.indicator_info, t1.value, t1.period_dat
 
 
 */
-select * from forecast_data;
-SELECT t1.period_date, t1.mean_forecast, t2.vendor_key, t3.forecast_type, t1.run_id, t5.timestamp from forecast_data t1 LEFT JOIN (indicators t2) ON (t2.indicator_id = t1.indicator_id) LEFT JOIN (forecast_types t3) ON (t3.forecast_type_id = t1.forecast_type_id) LEFT JOIN (run_table t4) ON (t4.run_id > t1.run_id) LEFT JOIN (run_table t5) ON (t5.run_id = t1.run_id) where t4.timestamp is NULL;
+
+
+
+
+select t1.period_date, sum(t1.mean_forecast * (1 - abs(sign(t1.ndicator_id -1)))) as vkey1 from forecast_data t1 group by period_date;
+
+
+SELECT t1.period_date, t1.mean_forecast, t2.vendor_key, t3.forecast_type, t1.run_id, t6.presentation_unit, t5.timestamp from forecast_data t1 LEFT JOIN (indicators t2) ON (t2.indicator_id = t1.indicator_id) LEFT JOIN (forecast_types t3) ON (t3.forecast_type_id = t1.forecast_type_id) LEFT JOIN (run_table t4) ON (t4.run_id > t1.run_id) LEFT JOIN (run_table t5) ON (t5.run_id = t1.run_id) LEFT JOIN (presentation_units t6) ON (t2.indicator_presentation = t6.unit_id) where t4.timestamp is NULL;
 select t1.run_id, t2.variable_name, t1.variable_value from run_info t1 LEFT JOIN (control_variables t2) ON (t2.variable_id = t1.variable_id);
-
-SELECT 
-MAX(CASE WHEN t3.fieldname = 'variable_name' THEN t3.fieldvalue ELSE NULL END) AS variable_name,
-MAX(CASE WHEN t3.fieldname = 'variable_value' THEN t3.fieldvalue ELSE NULL END) AS variable_value,
-FROM (select t1.run_id, t2.variable_name, t1.variable_value from run_info t1 LEFT JOIN (control_variables t2) ON (t2.variable_id = t1.variable_id)) AS t3
-GROUP BY t3.run_id;
+drop view latest_results_v;
 
 
+select period_date, sum(mean_forecast * (1 - ab - 1)))) as vkey1 from latest_results_v group by period_date;
 -- select * from data order by period_date;
 -- select t1.indicator_id, t1.period_date, t1.release_date, t1.value, t1.vintage  from data t1 left join data t2 on t1.period_date = t2.period_date and t1.vintage < t2.vintage order by period_date;
 -- select max(vintage) from data where indicator_id = 4 group by period_date
