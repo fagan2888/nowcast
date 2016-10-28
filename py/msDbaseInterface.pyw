@@ -77,7 +77,7 @@ class msMBDbInterface(msDbInterface):
             self.cnx.commit()
         except:
             raise
-    
+
     def next_release_date(self):
         logging.info("Retrieving next release date")
         query = '''select min(next_release) from (select indicator_id, max(next_release) as next_release from data group by indicator_id) as release_times'''

@@ -7,10 +7,11 @@ import socket
 import datetime
 import logging
 import traceback
-from msDbaseInterface import msDbInterface
-from msDbaseInterface import msMBDbInterface
+#from msDbaseInterface import msDbInterface
+#from msDbaseInterface import msMBDbInterface
 import msLogConfig
 import win32com.client
+import getpass
 
 class msMBDbService(win32serviceutil.ServiceFramework):
     """A service that polls the database checking when the next release date is"""
@@ -21,17 +22,17 @@ class msMBDbService(win32serviceutil.ServiceFramework):
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-        logging.info("Initiating")
+      #  logging.info("Initiating")
 
     def SvcStop(self):
-        logging.info("Stopping....")
+      #  logging.info("Stopping....")
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         win32event.SetEvent(self.hWaitStop)
 
     def SvcDoRun(self):
-        logging.info("Starting.....")
+      #  logging.info("Starting.....")
         servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, ''))
-        self.timeout = 60000
+        self.timeout = 10000
 
         while 1:
             logging.info("Stepping into loop")
@@ -42,7 +43,7 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                 break
             else:
                 try:
-                    servicemanager.LogInfoMsg("msDbMBService Querying Db")
+                    '''servicemanager.LogInfoMsg("msDbMBService Querying Db")
                     logging.info("Opening Db Connection within Service")
                     mb_up = msMBDbInterface(user = 'dbuser', password = 'Melbourne2016', host = 'mslinuxdb01', db_name = 'ms_econ_Db_DEV')
                     now = datetime.datetime.now()
@@ -73,9 +74,15 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                                 mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
                             logging.info("Upload complete for indicator %s", str(indicator_key))
                     else:
-                        logging.info("No updates found, waiting for %s minutes", str(self.timeout / 60000))
-                         
+                        logging.info("No updates found, waiting for %s minutes", str(self.timeout / 60000))'''
+                    logging.info("Attempting Macrobond connectio for user: %s", getpass.getuser())
+                    c = win32com.client.Dispatch("Macrobond.Connection")
+                    c.initialize('ynj6vrkxgzj25')
+                    #d = c.Database
+                    #s = d.FetchOneSeries("usgdp")
+                    #logging.info("Values Found %s", str(s.Values))
                 except:
+                    logging.info("Connection failed with: %s", traceback.format_exc())
                     servicemanager.LogErrorMsg(traceback.format_exc())
                     pass
 
@@ -83,5 +90,5 @@ def ctrlHandler(ctrlType):
    return True
 
 if __name__ == '__main__':
-   win32api.SetConsoleCtrlHandler(ctrlHandler, True)
+   #win32api.SetConsoleCtrlHandler(ctrlHandler, True)
    win32serviceutil.HandleCommandLine(msMBDbService)

@@ -55,6 +55,9 @@ try:
         current_release = releaseEntity.Metadata.GetFirstValue("LastReleaseEventTime")
 
         next_release = releaseEntity.Metadata.GetFirstValue("NextReleaseEventTime")
+
+        if not next_release:
+            next_release = pywintypes.Time(0).replace(year=1900, month=1, day=1)
         if 'bea037_76a067rx_m' != str(indicator_key):
             mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
 
