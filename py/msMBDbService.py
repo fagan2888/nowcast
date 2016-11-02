@@ -7,8 +7,8 @@ import socket
 import datetime
 import logging
 import traceback
-#from msDbaseInterface import msDbInterface
-#from msDbaseInterface import msMBDbInterface
+from msDbaseInterface import msDbInterface
+from msDbaseInterface import msMBDbInterface
 import msLogConfig
 import win32com.client
 import getpass
@@ -43,19 +43,43 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                 break
             else:
                 try:
-                    '''servicemanager.LogInfoMsg("msDbMBService Querying Db")
+                    servicemanager.LogInfoMsg("msDbMBService Querying Db")
                     logging.info("Opening Db Connection within Service")
                     mb_up = msMBDbInterface(user = 'dbuser', password = 'Melbourne2016', host = 'mslinuxdb01', db_name = 'ms_econ_Db_DEV')
                     now = datetime.datetime.now()
+                    data_correct = True
+                    incomplete_indicators = mb_up.find_incorrect_release_dates()
+                    if incomplete_indicators:
+                        for indicator in incomplete_indicators:
+                            logging.info("Fixing indicator: %s", str(indicator[0]))
+                            c = win32com.client.Dispatch("Macrobond.Connection")
+                            d = c.Database
+                            ts = d.FetchOneSeries(str(indicator[0]))
+                            releaseName = ts.Metadata.GetFirstValue("Release")
+                            releaseEntity = d.FetchOneEntity(releaseName)
+                            current_release = releaseEntity.Metadata.GetFirstValue("LastReleaseEventTime")
+                            next_release = releaseEntity.Metadata.GetFirstValue("NextReleaseEventTime")
+                            success = False
+                            if next_release:
+                                success = mb_up.fix_incomplete_indicator(indicator, next_release) 
+                                logging.info("Fixing indicator: %s : Complete", str(indicator[0]))   
+                            if not success:
+                                logging.info("Fixing indicator: %s: Incomplete", str(indicator[0]))
+                                data_correct = False
+                            if not data_correct:
+                                self.timeout = 1000 * 60  * 65 # 1s * 60 * 60 = 1hr
+
                     next_release = mb_up.next_release_date()[0]
+                    logging.info("Next release: %s", str(next_release))
                     if next_release < now:
                         indicator_updates = mb_up.available_updates()
                     else:
                         # No updates, wait until next release time until checking again.
                         indicator_updates = []
                         time_diff = next_release - now
-                        error_margin = 600000
-                        self.timeout = time_diff.total_seconds() * 1000 + error_margin
+                        error_margin = 600000 # Error margin of an hour
+                        if data_success:
+                            self.timeout = time_diff.total_seconds() * 1000 + error_margin
 
                     if len(indicator_updates) > 0:
                         logging.info("Updates found for: %s", str(indicator_updates))
@@ -69,18 +93,16 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                             releaseEntity = d.FetchOneEntity(releaseName)
                             current_release = releaseEntity.Metadata.GetFirstValue("LastReleaseEventTime")
                             next_release = releaseEntity.Metadata.GetFirstValue("NextReleaseEventTime")
-                            logging.info("Uploading data for indicator %s", str(indicator_key))
-                            if 'bea037_76a067rx_m' != str(indicator_key):
+                            if not next_release:
+                                next_release = pywintypes.Time(0).replace(year=1900, month=1, day=1)
+                            if ts:
+                                logging.info("Uploading data for indicator %s", str(indicator_key))
                                 mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
+
                             logging.info("Upload complete for indicator %s", str(indicator_key))
                     else:
-                        logging.info("No updates found, waiting for %s minutes", str(self.timeout / 60000))'''
-                    logging.info("Attempting Macrobond connectio for user: %s", getpass.getuser())
-                    c = win32com.client.Dispatch("Macrobond.Connection")
-                    c.initialize('ynj6vrkxgzj25')
-                    #d = c.Database
-                    #s = d.FetchOneSeries("usgdp")
-                    #logging.info("Values Found %s", str(s.Values))
+                        logging.info("No updates found, waiting for %s minutes", str(self.timeout / 60000))
+     
                 except:
                     logging.info("Connection failed with: %s", traceback.format_exc())
                     servicemanager.LogErrorMsg(traceback.format_exc())
@@ -90,5 +112,5 @@ def ctrlHandler(ctrlType):
    return True
 
 if __name__ == '__main__':
-   #win32api.SetConsoleCtrlHandler(ctrlHandler, True)
+   win32api.SetConsoleCtrlHandler(ctrlHandler, True)
    win32serviceutil.HandleCommandLine(msMBDbService)

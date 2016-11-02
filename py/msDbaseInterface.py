@@ -108,6 +108,31 @@ class msMBDbInterface(msDbInterface):
             print ("Unexpected error retrieving available series:", sys.exc_info()[0])
             raise
 
+    def find_incorrect_release_dates(self):
+        try:
+            query = '''select t2.vendor_key from data t1 JOIN (indicators t2) ON (t1.indicator_id = t2.indicator_id) WHERE t1.latest = true AND t1.next_release = '1900-01-01';'''
+            self.cursor.execute(query)
+            indicators = self.cursor.fetchall()
+            return indicators
+        except:
+            print ("Unexpected error finding incorrect release dates: ", sys.exc_info()[0])
+            raise
+
+    def fix_incomplete_indicator(self, incomplete_indicator, next_release_date):
+        logging.info("Fixing Incomplete indicator")
+        try:
+            query = '''SELECT indicator_id FROM indicators WHERE vendor_key = %s;'''
+            self.cursor.execute(query, (str(incomplete_indicator[0]),))
+            indicator_id = int(self.cursor.fetchone()[0])
+            query = '''UPDATE data SET next_release = %s WHERE indicator_id = %s AND latest = true and next_release = '1900-01-01';'''
+            self.cursor.execute(query, (datetime.datetime.strftime(next_release_date, '%Y-%m-%d %H:%M'), str(indicator_id), ))
+            self.cnx.commit()
+            return True
+        except: 
+            print ("Unexpected error correcting next release dates: ", sys.exc_info()[0])
+            raise
+                
+
     def available_updates(self):
         logging.info("Retrieving available updates")
         current_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M')
