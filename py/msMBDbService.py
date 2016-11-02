@@ -32,7 +32,7 @@ class msMBDbService(win32serviceutil.ServiceFramework):
     def SvcDoRun(self):
       #  logging.info("Starting.....")
         servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, ''))
-        self.timeout = 10000 
+        self.timeout = 60000 
 
         while 1:
             logging.info("Stepping into loop")
