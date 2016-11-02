@@ -68,6 +68,7 @@ try:
                 timeout = 1000 * 60  * 60 # 1s * 60 * 60 = 1hr
 
     next_release = mb_up.next_release_date()[0]
+
     logging.info("Next release: %s", str(next_release))
     if next_release < now:
         indicator_updates = mb_up.available_updates()
@@ -79,7 +80,6 @@ try:
         if data_success:
             timeout = time_diff.total_seconds() * 1000 + error_margin
 
-
     indicators = mb_up.return_available_series()
     all_series = d.FetchSeries(indicators)
     for num, indicator_key in enumerate(all_series):
@@ -90,11 +90,11 @@ try:
         next_release = releaseEntity.Metadata.GetFirstValue("NextReleaseEventTime")
         if not next_release:
             next_release = pywintypes.Time(0).replace(year=1900, month=1, day=1)
-        
-        mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
+        if ts:
+            mb_up.upload_mb_data(ts, str(indicator_key),  current_release, next_release)
 
 except:
     print ("Unexpected error:", sys.exc_info()[0])
     raise
 
-print("Got through")
+print("Run Complete")

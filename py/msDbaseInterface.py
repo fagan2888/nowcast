@@ -171,7 +171,7 @@ class msMBDbInterface(msDbInterface):
                 query = '''INSERT INTO data(indicator_id, value, period_date, release_date, next_release, latest, vintage)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
                         ON duplicate key update
-                        indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage;'''
+                        indicator_id = indicator_id, period_date = period_date, next_release = VALUES(next_release), release_date = VALUES(release_date), latest = True, value = value, vintage = vintage;'''
                 df_to_tuple = [tuple(x) for x in df.values]
                 self.cursor.executemany(query, df_to_tuple)
                 self.cnx.commit()
@@ -193,7 +193,7 @@ class msMBDbInterface(msDbInterface):
                     query = '''INSERT INTO data(indicator_id, value, period_date, release_date, next_release, latest, vintage)
                         SELECT %s, %s, %s, %s, %s, %s, (SELECT ifnull((SELECT MIN(vintage) FROM data WHERE indicator_id = %s AND period_date = %s AND release_date > %s), -1))
                         ON duplicate key UPDATE
-                         indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage'''
+                         indicator_id = indicator_id, period_date = period_date, next_release = VALUES(next_release), release_date = VALUES(release_date), latest = True, value = value, vintage = vintage'''
                     df_to_tuple = [tuple(x) for x in df[['indicator_id', 'value', 'period_date', 'release_date', 'next_release', 'latest', 'indicator_id', 'period_date', 'release_date']].values]
                     self.cursor.executemany(query, df_to_tuple)
                     self.cnx.commit()
@@ -213,7 +213,7 @@ class msMBDbInterface(msDbInterface):
                     query = '''INSERT INTO data(indicator_id, value, period_date, release_date, next_release, latest, vintage)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
                         ON duplicate key UPDATE
-                        indicator_id = indicator_id, period_date = period_date, release_date = release_date, latest = True, value = value, vintage = vintage;'''
+                        indicator_id = indicator_id, period_date = period_date, next_release = VALUES(next_release), release_date = VALUES(release_date), latest = True, value = value, vintage = vintage;'''
                     df_to_tuple = [tuple(x) for x in df.values]
                     logging.info('Adding latest vintages')
                     self.cursor.executemany(query, df_to_tuple)

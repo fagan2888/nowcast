@@ -32,7 +32,7 @@ class msMBDbService(win32serviceutil.ServiceFramework):
     def SvcDoRun(self):
       #  logging.info("Starting.....")
         servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, ''))
-        self.timeout = 10000
+        self.timeout = 10000 
 
         while 1:
             logging.info("Stepping into loop")
@@ -77,9 +77,10 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                         # No updates, wait until next release time until checking again.
                         indicator_updates = []
                         time_diff = next_release - now
-                        error_margin = 600000 # Error margin of an hour
-                        if data_success:
+                        error_margin = 1000 * 60  * 60 # Error margin of an hour
+                        if data_correct:
                             self.timeout = time_diff.total_seconds() * 1000 + error_margin
+
 
                     if len(indicator_updates) > 0:
                         logging.info("Updates found for: %s", str(indicator_updates))
@@ -102,7 +103,9 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                             logging.info("Upload complete for indicator %s", str(indicator_key))
                     else:
                         logging.info("No updates found, waiting for %s minutes", str(self.timeout / 60000))
-     
+                    
+                    logging.info("Next check will be: %s", datetime.datetime.strftime(now + datetime.timedelta(seconds = (self.timeout * 0.001)), '%Y-%m-%d %H:%M'))
+
                 except:
                     logging.info("Connection failed with: %s", traceback.format_exc())
                     servicemanager.LogErrorMsg(traceback.format_exc())
