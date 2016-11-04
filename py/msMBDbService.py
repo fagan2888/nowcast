@@ -12,6 +12,7 @@ from msDbaseInterface import msMBDbInterface
 import msLogConfig
 import win32com.client
 import getpass
+import pywintypes
 
 class msMBDbService(win32serviceutil.ServiceFramework):
     """A service that polls the database checking when the next release date is"""
@@ -32,7 +33,7 @@ class msMBDbService(win32serviceutil.ServiceFramework):
     def SvcDoRun(self):
       #  logging.info("Starting.....")
         servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, ''))
-        self.timeout = 60000 
+        self.timeout = 60000
 
         while 1:
             logging.info("Stepping into loop")
@@ -61,8 +62,8 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                             next_release = releaseEntity.Metadata.GetFirstValue("NextReleaseEventTime")
                             success = False
                             if next_release:
-                                success = mb_up.fix_incomplete_indicator(indicator, next_release) 
-                                logging.info("Fixing indicator: %s : Complete", str(indicator[0]))   
+                                success = mb_up.fix_incomplete_indicator(indicator, next_release)
+                                logging.info("Fixing indicator: %s : Complete", str(indicator[0]))
                             if not success:
                                 logging.info("Fixing indicator: %s: Incomplete", str(indicator[0]))
                                 data_correct = False
@@ -103,7 +104,7 @@ class msMBDbService(win32serviceutil.ServiceFramework):
                             logging.info("Upload complete for indicator %s", str(indicator_key))
                     else:
                         logging.info("No updates found, waiting for %s minutes", str(self.timeout / 60000))
-                    
+
                     logging.info("Next check will be: %s", datetime.datetime.strftime(now + datetime.timedelta(seconds = (self.timeout * 0.001)), '%Y-%m-%d %H:%M'))
 
                 except:
