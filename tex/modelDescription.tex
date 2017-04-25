@@ -1,0 +1,683 @@
+\documentclass[12pt]{article}
+\usepackage[
+	a4paper,
+	left   = 2.5cm,
+	right  = 2.5cm,
+	top    = 2.0cm,
+	bottom = 2.0cm
+	]{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath,amsthm,amssymb, bbm}
+\usepackage{graphicx,tikz,pgfplots}
+\usepackage{hyperref}
+\usepackage{lipsum}
+\usepackage{placeins}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[title, titletoc, toc]{appendix}
+\usepackage[sort, comma]{natbib}
+\usepackage{setspace}
+\usepackage{pdflscape}
+\onehalfspacing
+
+
+\newcommand{\distas}[1]{\mathbin{\overset{#1}{\kern\z@\sim}}}%
+
+%-----------------------------------------------------%
+\title{Nowcasting Report of the US Economy}
+\author{
+	Macrosynergy Partners LLP
+	}
+
+\date{\today}
+
+%-----------------------------------------------------%
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	Report of the Nowcasting model at \emph{Macrosynergy Partners LLP} that summarise the forecasts of the US Economy as of \today. Furthermore the appendix gives a (currently incomplete) summary of the dynamic factor model used to generate these forecasts.
+\end{abstract}
+
+%\newpage
+%\tableofcontents
+%\newpage
+
+%----------------------------%
+%% --    Introduction    -- %%
+%----------------------------%
+
+%------------------------------------------------------%
+\section{Current Status of the Nowcasting Project}
+\begin{enumerate}
+	\item	The difference between a VW and a Rolls-Royce, the current model is in the VW category
+	\item 	In the key report we summarise the key predictions from the model based on the joint co-movement of the variables (and thereby the state of the US economy) as well as an explicit modelling of the idiosyncratic component for each of the series.
+\end{enumerate}
+
+
+
+
+%--------------------------------------------------------------------%
+
+\section{Main Forecasts}
+
+\begin{figure}[ht]
+	\centering
+	\caption{Key Now-Casts and Forecasts}
+	\includegraphics[scale=1]{graphs/KeyVariables.pdf}
+	\caption*{\small{Datasource: Macrobond Financial AB}}
+\end{figure}
+
+
+\begin{landscape}
+	\begin{table}[ht]
+		\caption{United States: Nowcasting Model output}
+		\input{tables/output_table.tex}
+		\label{tab:table4}
+		\centering
+		\caption*{\small{Red numbers indicates a Nowcast, green numbers are forecasts. Datasource: Macrobond Financial AB}}
+	\end{table}
+\end{landscape}
+
+
+
+\begin{figure}[ht]
+	\centering
+	\caption{Estimated Common Factors}
+	\includegraphics{graphs/estimatedFactors.pdf}
+	\caption*{\small{Datasource: Macrobond Financial AB}}
+\end{figure}
+\FloatBarrier
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Investigating US Retail Sales}
+
+
+\begin{figure}[ht]
+	\centering
+	\caption{Retail Sales}
+	\includegraphics{graphs/retailSalesInvestigated.pdf}
+	\caption*{\small{Datasource: Macrobond Financial AB}}
+\end{figure}
+
+
+\begin{table}[ht]
+	\caption{United States: Retail Sales}
+	\input{tables/retailSales_table.tex}
+	\label{tab:tableRetail}
+	\centering
+	\caption*{\small{Datasource: Macrobond Financial AB}}
+	%\caption*{\small{Red numbers indicates a Nowcast, green numbers are forecasts}}
+\end{table}
+
+%-----------------------------------%%
+\FloatBarrier
+\section{The individual fit of the series}
+
+
+
+\begin{figure}[ht]
+	\centering
+	\caption{Surveys}
+	\includegraphics{graphs/Surveys.pdf}
+	\caption*{\small{Datasource: Macrobond Financial AB}}
+\end{figure}
+
+
+
+\begin{figure}[ht]
+	\centering
+	\caption{Production and Trade}
+	\includegraphics{graphs/Production and Trade.pdf}
+	\caption*{\small{Datasource: Macrobond Financial AB}}
+\end{figure}
+
+
+\begin{figure}[ht]
+	\centering
+	\caption{Labour Market}
+	\includegraphics{graphs/Labour Market.pdf}
+	\caption*{\small{Datasource: Macrobond Financial AB}}
+\end{figure}
+
+
+\begin{figure}[ht]
+	\centering
+	\caption{Consumption and Income}
+	\includegraphics{graphs/Consumption and Income.pdf}
+	\caption*{\small{Datasource: Macrobond Financial AB}}
+\end{figure}
+
+\FloatBarrier
+
+
+\section{Extensions}
+The next steps for the model could be some of the following.
+
+\subsection{Work in progress}
+\begin{enumerate}
+	\item	Robustness: Historical performance of the model and benchmarking against alternative forecasters and models
+	\begin{enumerate}
+		\item 	Survey of Professional Forecasters (SPF) from Philidelphia Fed, NY Fed Nowcast and Atlanta Fed GDPnow
+		\item 	Various Econometric models (such as the constant growth model: $y_{t} = \mu + u_{t}$, AR process: $y_{t} = \mu + \rho y_{t-1} + u_{t}$, Local model: $y_{t} = \mu_{t} + u_{t}, \quad \mu_{t}=\mu_{t-1}+\epsilon_{t}$)
+	\end{enumerate}
+	\item 	Decompose the forecast into the predictable component (common component and predictable idiosyncratic component) and non-predictable
+	\item 	Scenario based forecasting: Condition on the forecast of the next release for a series being higher or lower than the mean forecast of it ($\pm 2 st.d.$), how will that shift the forecast for our key variables?
+	\item 	Decompose the releases into news and noise, and weight the innovation of the other series in terms of deviation from forecast (similar to what nowcasting.com is doing)
+\end{enumerate}
+
+\subsection{The next step?}
+\begin{enumerate}
+	\item	Improve on the estimation methodology (Maximum likelihood or Bayesian estimation)
+	\item	Model the trend and Stochastic volatility for the series
+	\item 	KloFlow v2: Nowcasting flow of funds?
+	\item 	All the infrastructure is scalable for developed economies and (should be) possible to implement for emerging economies
+\end{enumerate}
+
+%--------------------------------------------------%
+
+
+\subsection{Transformations of the data}
+
+\begin{table}[ht]
+	\centering
+	\caption{Transformation of the data}
+	\begin{tabular}{lcc}
+		\hline\\
+		Code & Model Transformation & Final Transformation\\ \hline\hline
+		0 	& $x_{t}$ & $x_{t}$\\
+		1 	& $\log(x_{t})$ & $x_{t}$\\
+		2	& $\Delta_{3} x_{t}$ & $x_{t}$\\
+		3 	& $400\Delta_{3} \log\left( x_{t} \right)$ &  $400\Delta_{3} \log\left( x_{t} \right)$\\
+		4 	& $100\Delta_{3}\left(\Delta_{12}\log(x_{t})\right)$ & $100\Delta_{12}\log(x_{t})$\\ \hline
+	\end{tabular}
+\end{table}
+
+\FloatBarrier
+%--------------------------%
+
+
+%------------------------------------%
+\bibliography{mybib}{}
+\bibliographystyle{plainnat}
+%------------------------------------%
+
+
+%---------------------------------------------------------------------%
+\begin{appendices}
+
+%% --- Aggregation Methodology -- %%
+
+%---------------------------------%
+%% -- Description of the model -- %%
+%---------------------------------%
+
+\section{Description of the model}
+
+Following \cite{AntolinDiazDrechselPetrella2016} we model the observation (measurement) equation using the assumption of all monthly variables of the quarter are available:
+
+\begin{equation}
+y_{t}^{+} = \mu + \Lambda f_{t} + u_{t}
+\end{equation}
+
+The state-equation of the common factors are given by a VAR($p_{f}$) model:
+\begin{equation}
+f_{t} = \phi_{1} f_{t-1} +\phi_{2} f_{t-2} +  \dots + \phi_{p} f_{t-p_{f}}  + \epsilon_{t}, \quad \epsilon_{t}\sim N(0, Q).
+\end{equation}
+
+Or re-written:
+
+\begin{equation}
+\begin{aligned}
+\left(I_{n} - \Theta(L) \right) u_{t}	&= \varepsilon_{t}, 	\quad 	&&\varepsilon_{t}\sim N(0,H)\\
+\left(I_{r} - \phi(L)  \right) f_{t} 	&= \eta_{t}, 			\quad 	&&\eta_{t}\sim N(0,Q).
+\end{aligned}
+\end{equation}
+
+The factor loadings ($\Lambda$) are not time-invariant and the idiosyncratic components $u_{t}$ follows an $ma(p_{u})$ process. 
+
+Following \cite{MarianoMurasawa2003}, we approximate the quarterly variables as unobserved variables with the measurement equation:
+
+\begin{equation}
+\underset{n_{q}.1}{y_{t}^{Q}} - \mu^{Q} = \lambda^{Q} \widetilde{f}_{t} + \widetilde{u}_{t}^{Q}
+\end{equation}
+
+With the variables given as:
+\begin{equation*}
+\begin{aligned}
+\widetilde{f}_{t} &= \frac{1}{3} f_{t} + \frac{2}{3} f_{t-1} + f_{t-2} + \frac{2}{3} f_{t-3} + \frac{1}{3} f_{t-4}\\
+\widetilde{u}_{t}^{Q} &= \frac{1}{3} u_{t}^{Q} + \frac{2}{3} u_{t-1}^{Q} + u_{t-2}^{Q} + \frac{2}{3} u_{t-3}^{Q} + \frac{1}{3} u_{t-4}^{Q}.
+\end{aligned}
+\end{equation*}
+
+%And the idiosyncratic component of the quarterly variables are given by:
+%\begin{equation}
+%	(I_{n_{q}} - \Theta^{(q)}(L)) u_{t}^{(q)} =  \varepsilon_{t}^{(q)}
+%\end{equation}
+
+Following \cite{DurbinKoopman2012} and \cite{Harvey1989} and inverting the idiosyncratic component we can re-write the model in terms of quasi-differences for the monthly variables:
+
+\begin{equation}
+\begin{aligned}
+\widetilde{y}_{t} 	&= C X_{t} + \tilde{\epsilon}_{t},	\quad &\tilde{\epsilon}_{t} 		&\sim N(0, \widetilde{H}),\\
+X_{t} 			&= A X_{t-1} + \tilde{\eta}_{t},		\quad &\tilde{\eta}_{t} 	&\sim N(0, \widetilde{Q}).
+\end{aligned}
+\end{equation}
+
+Where we have written out the monthly observations in terms of quasi-differences (again following \cite{AntolinDiazDrechselPetrella2016}):
+
+\begin{equation*}
+\underset{n_{y}.1}{\widetilde{y}_{t}} =
+\begin{bmatrix}
+\left(I_{n_{m}} - \Theta^{(m)}(L)\right)\left(y_{t}^{(m)} - \mu^{(m)}\right)\\
+y_{t}^{(q)} - \mu^{(q)}
+\end{bmatrix}.
+\end{equation*}
+
+The state-variable ($X_{t}$) is found by first defining the two auxiliary variables: $pp =\max(p_{f}, p_{u}+1, 5)$ and $qq=\max(p_{u}, 5)$, where $p_{f}$ and $p_{u}$ is the lags for the dynamic process of the common components and the idiosyncratic components.
+Then noting that the dimension of $X_{t}$ is $n_{x} = pp \times r + qq \times n_{q}$ we can set up the state-vector as:
+
+\begin{equation*}
+\underset{n_{x}.1}{X_{t}'} =
+\begin{bmatrix}
+\underset{r.1}{f_{t}}' 				&
+\underset{r.1}{f_{t-1}}'			&
+\dots								&
+\underset{r.1}{f_{t-pp + 1}}'		&
+\underset{n_{q}.1}{u_{t}^{(q)}}'	&
+\dots								&
+\underset{n_{q}.1}{u_{t-qq+1}^{(q)}}'
+\end{bmatrix}
+\end{equation*}
+
+The measurement equation matrix is given by and the variance-covariance of the idiosyncratic component are given by:
+
+\begin{equation*}
+\underset{n_{y}.n_{x}}{C(\Lambda)} =
+\begin{bmatrix}
+% Monthly Variables Loading of states
+\underset{n_{m}.pp\times r}{c_{m}} 
+& \underset{n_{m}.(qq\times n_{q})}{\textbf{0}}\\
+% Quarterly Variable Loading of states
+\underset{n_{q}.r}{\lambda^{q}} \times \underset{r.pp\times r}{ c_{Q}^{f} } 
+& \underset{n_{q}.(qq\times n_{q})}{ c_{Q}^{u} }
+\end{bmatrix}
+\end{equation*}
+
+The loadings are determined by the matrices:
+
+\begin{equation}
+\begin{aligned}
+\underset{r.(p_{f}-1)r}{ c_{Q}^{f} } &= 
+\begin{bmatrix}
+\frac{1}{3} 
+& \frac{2}{3}
+& 1
+& \frac{2}{3}
+& \frac{1}{3}
+& \underset{1.(pp-5)}{\textbf{0}} 
+\end{bmatrix}
+\otimes I_{r}\\
+\underset{n_{q}.qq\times n_{q}}{ c_{Q}^{u} } &=
+\begin{bmatrix}
+\frac{1}{3}
+& \frac{2}{3}
+& 1
+& \frac{2}{3}
+& \frac{1}{3}
+& \underset{1.(qq-5)}{\textbf{0}}
+\end{bmatrix}
+\otimes I_{n_{q}}
+\end{aligned}
+\end{equation}
+
+and for the monthly Variables:
+\begin{equation}
+\underset{n_{m}.pp\times r}{c_{m}(\Theta^{m}, \lambda_{m})} = 
+\begin{bmatrix}
+\begin{bmatrix}
+I_{n_{m}} & \underset{n_{m}.p_{u} \times n_{m}}{-\Theta^{m}} 
+\end{bmatrix}
+\times \left(I_{(p_{u}+1)} \otimes \underset{n_{m}.r}{\lambda^{m}}\right) & \underset{n_{m}.(pp-p_{u}-1)r}{\textbf{0}}
+\end{bmatrix}
+\end{equation}
+
+Where the lag coeffiicents are given by (all diagonal matrices):
+
+\begin{equation*}
+\Theta_{m} =
+\begin{bmatrix}
+%\theta_{1}^{m} & \theta_{2}^{m} & \dots & \theta_{p_{u}}^{m}
+diagm(\theta_{1}^{m}) & diagm(\theta_{2}^{m}) & \dots & diagm(\theta_{p_{u}}^{m})
+\end{bmatrix}
+\end{equation*}
+
+
+The idiosyncratic component and it's variance covariance in the measurement equation is defined as:
+\begin{equation*}
+\tilde{\varepsilon}_{t}' = 
+\begin{bmatrix}
+\underset{n_{m}.1}{\varepsilon^{(m)'}_{t}} &
+\underset{n_{q}.1}{\textbf{0}'}
+\end{bmatrix},
+\quad
+\widetilde{H} = 
+\begin{bmatrix}
+\underset{n_{m}.n_{m}}{H_{m}} 	&  \underset{n_{m}.n_{q}}{\textbf{0}} \\
+\underset{n_{q}.n_{m}}{\textbf{0}} 	& \underset{n_{q}.n_{q}}{\textbf{0}}
+\end{bmatrix}
+\end{equation*}
+
+where the variance-covariance matrix is a diagonal matrix.
+This could be exploited to reduce the number of parameters of the model.
+
+
+The system matrix is given by:
+
+\begin{equation}
+\underset{n_{x}.n_{x}}{A(\Phi, \Theta^{Q})} = 
+\begin{bmatrix}
+%% Common factors
+\underset{pp \times r. pp \times r}{a_{f}(\Phi)} 
+& \underset{pp \times r. qq \times n_{q}}{\textbf{0}}\\
+%% Quarterly Idiosyncratic Component
+\underset{qq \times n_{q}.pp \times r}{\textbf{0} }	  
+& \underset{qq\times n_{q}.qq \times n_{q}}{a_{Q} \left( \Theta^{Q} \right)}
+\end{bmatrix}
+\end{equation}
+
+With the individual elements given by:
+
+\begin{equation*}
+\underset{pp\times r.pp \times r}{a_{f}} =
+\begin{bmatrix}
+\underset{r.p_{f}\times r}{\Phi} &
+\underset{r.(pp-p_{f})r}{\textbf{0}} \\
+%%
+I_{(pp - 1)r} &
+\underset{(pp - 1)r.r}{\textbf{0}}
+\end{bmatrix}
+, \quad
+\underset{r.p_{f}r}{\Phi} =
+\begin{bmatrix}
+\underset{r.r}{\phi_{1}} 
+& \underset{r.r}{\phi_{2}} 
+& \dots 
+& \underset{r.r}{\phi_{p_{f}} }
+\end{bmatrix}
+\end{equation*}
+
+
+The quarterly idiosyncratic component:
+
+\begin{equation*}
+\underset{qq \times n_{q}. qq \times n_{q}}{a_{Q}} =
+\begin{bmatrix}
+\underset{n_{q}.p_{u}\times n_{q}}{\Theta_{Q}} 	&
+\underset{n_{q}.(qq - p_{u}) \times n_{q}}{\textbf{0}}\\
+%%
+I_{(qq - 1) n_{q}}  & 
+\underset{(qq - 1) n_{q} . n_{q}}{\textbf{0}}\\
+\end{bmatrix}
+\end{equation*}
+
+
+And lastly the state innovations are given by:
+\begin{equation*}
+\underset{n_{x}.1}{\tilde{\eta}_{t}}' = 
+\begin{bmatrix}
+\underset{r.1}{\eta_{t}}' & 
+\underset{(pp - 1)r.1}{\textbf{0}}' & 
+\underset{n_{q}.1}{\varepsilon_{t}^{Q}}' & 
+\underset{(qq -1) n_{q}.1}{\textbf{0}}'
+\end{bmatrix},
+\end{equation*}
+
+And the variance-covariance matrix of the state are given by:
+
+\begin{equation*}
+\underset{n_{x}.n_{x}}{ \widetilde{Q} } =
+\begin{bmatrix}
+%% first row
+\underset{r.r}{Q} 
+& \underset{r.(pp-1)r}{\textbf{0}}
+& \underset{r.n_{q}}{\textbf{0}}
+& \underset{r.(qq-1)n_{q}}{\textbf{0}}\\
+%% second row
+\underset{(pp-1)r.r}{\textbf{0}}
+& \underset{(pp-1)r.(pp-1)r}{\textbf{0}}
+& \underset{(pp-1)r.n_{q}}{\textbf{0}}
+& \underset{(pp-1)r.(qq-1)n_{q}}{\textbf{0}}  \\
+%% third row
+\underset{n_{q}.r}{\textbf{0}} 
+& \underset{n_{q}.(pp-1)r}{\textbf{0}}
+& \underset{n_{q}.n_{q}}{ H_{Q} }
+& \underset{n_{q}.(qq-1)n_{q}}{\textbf{0}} \\
+%% fourth row
+\underset{(qq-1)n_{q}.r}{\textbf{0}}	
+& \underset{(qq-1)n_{q}.(pp-1)r}{\textbf{0}}
+& \underset{(qq-1)n_{q}.n_{q}}{\textbf{0}}
+& \underset{(qq-1)n_{q}.(qq-1)n_{q}}{\textbf{0}}
+\end{bmatrix}
+\end{equation*}
+
+We check whether the system is observable and controllable following the rank conditions of \citet[pp.113--117]{Harvey1989}.
+
+
+
+%---------------------------------------------------------------------%
+\section{Kalman filter, Kalman Smoother and the log--likelihood}
+
+Firstly following \cite{Harvey1989} we check whether the state-space of the model is controllable and observable. 
+
+Add the following derivations and use of:
+\begin{enumerate}
+	\item 	Kalman filter
+	\item 	Kalman smoother
+	\item 	log--likelihood
+\end{enumerate}
+
+
+First, recall the system:
+
+\begin{equation}
+\begin{aligned}
+\widetilde{y}_{t} 			&= C X_{t} + \tilde{\epsilon}_{t}, 	\quad &\epsilon_{t} 	        &\sim N(0, \widetilde{H} ),\\
+X_{t} 			&= A X_{t-1} + \tilde{\eta}_{t}		\quad &\tilde{\eta}_{t} 		&\sim N(0, \widetilde{Q}).
+\end{aligned}
+\end{equation}
+
+
+\subsection{The Kalman filter}
+
+The following is the algorithm for filtering out (recursively) the unobserved state.
+
+
+First we define the forecast error of the model as (conditional of the parameters for iteration $i$):
+\begin{equation}
+\widehat{v}_{t}^{(i)} = \widetilde{y}_{t} - \widehat{C}^{(i)} \widehat{X}_{t|t-1}^{(i)}
+\end{equation}
+
+The equations for updating the Kalman filter are given by (need to add missing observation adjustment!):
+
+\begin{equation*}
+\begin{aligned}
+\underset{n_{y}.1}{\widehat{v}_{t}^{(i)}} 			&= \widetilde{y}_{t} - \widehat{C}^{(i)} \widehat{X}_{t|t-1}^{(i)}\\
+\underset{n_{y}.n_{y}}{\widehat{F}_{t}^{(i)}} 		&= \widehat{C}^{(i)} P_{t|t-1}^{(i)} \widehat{C}^{(i)'} + \widetilde{H}^{(i)} \\
+\underset{n_{x}.1}{\widehat{X}_{t|t}^{(i)}} 		&= \widehat{X}_{t|t-1}^{(i)} + \widehat{P}_{t|t-1}^{(i)} \widehat{C}^{(i)} \left(\widehat{F}_{t}^{(i)}\right)^{-1} \widehat{v}_{t}^{(i)}\\	
+\underset{n_{x}.1}{\widehat{X}_{t+1|t}^{(i)}} 		&= \widehat{A}^{(i)} \widehat{X}_{t|t}^{(i)}\\
+\underset{n_{x}.n_{x}}{\widehat{P}_{t|t}^{(i)}}		&= \widehat{P}_{t|t-1}^{(i)} - \widehat{P}_{t|t-1}^{(i)} \widehat{C}_{t}^{(i)'} \left(\widehat{F}_{t}^{(i)}\right)^{-1} \widehat{C}^{(i)} \widehat{P}_{t|t-1}^{(i)}\\
+\underset{n_{x}.n_{x}}{\widehat{P}_{t+1|t}^{(i)}}	&= \widehat{A} \widehat{P}_{t|t}^{(i)} \widehat{A}' + \widetilde{Q}
+\end{aligned}
+\end{equation*}
+
+
+
+We deal with missing values by following \cite{DurbinKoopman2012} for how to deal with missing values.
+
+\subsection{Log-likelihood}
+
+
+\subsection{Kalman Smoother}
+
+%-----------------------------------------%
+\section{Estimation}
+
+Following ... we use a two stage-procedure for the estimation, by first estimating the factors using principle components on a subset of the dataset, with a balanced panel and then using projections get the initial parameters of the model.
+
+Then in the second stage we using the EM algorithm and quasi-maximum likelihood to estimate the model.
+
+The basic steps of the estimation procedure is:
+\begin{enumerate}
+	\item 	PCA estimates of initial states and parameters
+	\item 	Set up the modle with the initial parameter and starting values
+	\item 	Compute an estimate of the unobserved states (conditional of the parameters)
+	\item 	Re-estimate the parameters of the model (conditional of the estimates of the states)
+	\item 	Repeat step (3) and (4) until convergence -- can add additional numerical maximisation step after EM-algorithm has converged to check if it has truly converged.
+\end{enumerate}
+
+%--------------------------%
+\subsection{Stage (1) Initial conditions and parameters}
+
+WE follow \cite{DozGiannoneReichlin2011} in using a two-stage procedure to estimate the model and augment the last stage with an additional update of the log-likelihood.
+Using PCA we estimate the factors on a balanced panel of the data, without any missing values.
+
+The balanced panel is chosen from the monthly variable with the following standardisation:
+
+\begin{equation*}
+\left(\frac{y_{t,i}^{m} - \mu_{i}^{m}}{\sigma_{i}^{m}}\right) \quad \forall i=1,\dots,n_{m}
+\end{equation*}
+
+Using principal components
+And the initial parameters are then estimated on the demeaned variables:
+
+\begin{equation}
+\begin{aligned}
+\tilde{y}_{t}^{m}  	&= y_{t}^{m} - \mu_{m} &&= \lambda_{Q} f_{t} + u_{t}^{m}, \quad &&u_{t}^{m} &= \Theta^{m}(L)u_{t} + \varepsilon_{t}^{m},\quad \varepsilon_{t}^{m}\sim N(\textbf{0}_{n_{m}}, H^{m}) \\
+\tilde{y}_{t}^{Q}	&= y_{t}^{Q} - \mu_{Q} &&= \lambda_{Q} f_{t} + u_{t}^{Q}, \quad &&u_{t}^{Q} &= \Theta^{Q}(L)u_{t} + \varepsilon_{t}^{Q},\quad \varepsilon_{t}^{Q} \sim N(\textbf{0}_{n_{Q}}, H^{Q})
+\end{aligned}
+\end{equation}
+
+And using the OLS projection to get the initial parameters for the monthly variables:
+\begin{equation*}
+\widehat{\lambda}_{m}^{(0)} = \widetilde{y}^{m} \widehat{\textbf{f}}_{PCA} \left(\widehat{\textbf{f}}_{PCA}'\widehat{\textbf{f}}_{PCA}\right)^{-1}
+\end{equation*}
+
+%--------------------------%
+\subsection{Stage (2) Estimation: Maximum Likelihood}
+
+Outlining the EM-algorithm for estimating the Maximum Likelihood parameters of the model.
+
+\subsection{Step (2.1) Quasi-difference of the series}
+Quasi-difference of the series conditional on parameters from iteration $i$
+\begin{equation*}
+\underset{n_{y}.1}{\widetilde{y}_{t}^{(i)}} =
+\begin{bmatrix}
+\left(I_{n_{m}} - \Theta_{m}^{(i-1)}(L)\right)\left(y_{t}^{(m)} - \mu_{m}\right)\\
+y_{t}^{(q)} - \mu_{q}
+\end{bmatrix}
+\end{equation*}
+
+%-------------------------------------%	
+\subsection{Step (2.2) Re-estimate the factors ($X_{t}^{(i)}$)}
+Estimate states (factors) for iteration $i$ conditional on the parameters from iteration $i$
+
+\begin{equation*}
+X^{(i)}_{t}(\widetilde{y}_{t}^{(i)})
+\end{equation*}
+
+%------------------%	
+\subsection{Step (2.3) Re-estimate the parameters ($i+1$)}
+Conditional on the states from iteration $i+1$ re-estimate the parameters
+
+The observations equation for the monthly variables (\textbf{OBS: Have to modify}):
+
+\begin{equation}
+vec{(\lambda_{m}^{(i+1)})} = 
+\left(\sum_{t=1}^{T} f_{t}^{(i)} {f_{t}^{(i)}}' \otimes W_{t}^{m} \right)^{-1}
+vec\left(\sum_{t=1}^{T} W_{t}^{m} y_{t}^{(m)*} {f_{t}^{(i)}}'\right)
+\end{equation}
+
+Where $i$ refers to the iterations of the EM algorithm.
+
+The updates for the parameters of the quarterly observations are similarly given by:
+
+\begin{equation}
+vec{(\lambda_{q}^{(i+1)})} = 
+\left(\sum_{t=1}^{T} \widetilde{f}_{t}^{(i)} \widetilde{f}_{t}^{(i)\intercal} \otimes W_{t}^{q} \right)^{-1}
+vec\left(\sum_{t=1}^{T} W_{t}^{q} y_{t}^{(q)*} \widetilde{f}_{t}^{(i)\intercal}\right)
+\end{equation}
+
+For the transition dynamics of the unobserved factors:
+\begin{equation}
+\widehat{\Phi}^{(i+1)} =  \sum_{t=1}^{T}\left(f_{t}^{(i)} F_{t-1}^{(i)'}\right) \sum_{t=1}^{T}\left(F_{t-1}F_{t-1}'\right)
+\end{equation}
+
+Where $F_{t}$ is given by:
+\begin{equation}
+F_{t} = 
+\begin{bmatrix}
+f_{t} & f_{t-1} & \dots & f_{t-p_{f}}
+\end{bmatrix}
+\end{equation}
+
+The residuals are then estimated as:
+
+\begin{equation*}
+\widehat{\eta}_{t}^{(i+1)} = f_{t}^{(i)} - \widehat{\Phi}^{(i+1)} F_{t-1}^{(i)}
+\end{equation*}
+
+Which means we can update the estimate of the variance-covariance matrix as (adjusting for the degree of freedoms):
+
+\begin{equation*}
+\widehat{Q}^{(i+1)} = \frac{1}{T - p_{f} r}\sum_{t=1}^{T} \left(\eta_{t}^{(i+1)}\eta_{t}^{(i+1)'}\right)
+\end{equation*}
+
+
+The parameters for the moving average component of the quarterly idiosyncratic part can be estimated as:
+\begin{equation*}
+\widehat{\Theta}_{Q,j}^{(i+1)} = 
+\sum_{t=1}^{T} \left(u_{t,j}^{Q}U_{t-1,j}^{Q'}\right)
+\sum_{t=1}^{T} \left(U_{t-1,j}^{Q} U_{t-1,j}^{Q'}\right)^{-1}, 
+\quad \forall j = 1, \dots, n_{Q}
+\end{equation*}
+
+Where the $U_{t-1,j}^{Q}$ variables is defined as:
+\begin{equation*}
+U_{t-1,j}^{Q} =
+\begin{bmatrix}
+u_{t-1,j}^{Q} & \dots & u_{t-p_{u},j}^{Q}
+\end{bmatrix}
+\end{equation*}
+
+The residuals can then be estimated as:
+\begin{equation*}
+\varepsilon_{t,j}^{Q,(i)} = \widehat{u}_{t,j}^{Q,(i)} - \widehat{\Theta}_{Q,j}^{(i+1)} \widehat{U}_{t,j}^{Q,(i)}
+\end{equation*}
+
+And the individual elements of the diagonal variance-covariance matrix can then be estimated as:
+\begin{equation*}
+\sigma_{Q,j}^{(i+1)} = 
+\frac{1}{T - 1}\sum_{t=1}^{T}\left(	\varepsilon_{t,j}^{Q,(i)} 	\varepsilon_{t,j}^{Q,(i)'} \right),
+\quad \forall j = 1,\dots,n_{Q}
+\end{equation*}
+
+%------------------%
+\subsection{Step (2.4) Check convergence}	
+Check convergence using the following criteria:
+\begin{equation*}
+\bar{L} = \frac{L-L}{L}
+\end{equation*}
+
+
+
+
+
+%-----------------------------%
+\subsection{Stage (3) Numerical optimisation of log--lik}
+
+Using Newtons methods we re-optimise the parameters and states conditional on the previous EM algorithm solution.
+
+\end{appendices}
+%----------------------------------------------------%
+
+\end{document}

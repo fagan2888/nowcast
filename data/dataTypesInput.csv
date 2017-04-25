@@ -1,0 +1,22 @@
+Name,codeName,LongName,freq,lag,code,Change,Specific
+ussurv1055,ISMMfg,"Business Surveys, ISM, Report on Business, Manufacturing, Purchasing Managers' Index",12,1,2,3m change (absolute),diff
+ussurv1044,ISMNonMfg,"Business Surveys, ISM, Report on Business, Non-Manufacturing, Purchasing Managers' Index",12,1,2,3m change (absolute),diff
+uslama1135,WkHrs,"Productivity, Costs & Hours Worked, Hours Worked, Average Weekly, Production & Non-Supervisory Employees, Total Private, SA",12,1,3,3m growth (%),diff
+uslama1849,Unemployment,"Unemployment, CPS, 16 Years & Over, Rate, SA",12,1,2,3m change (absolute),diff
+uslama1060,NFP,"Employment, CES, Nonfarm, Payroll, Total, SA",12,1,3,3m growth (%),log + diff
+ussurv0354,CsmSent,"Consumer Surveys, University of Michigan, Consumer Sentiment, Consumer Sentiment Index",12,0,2,3m change (absolute),diff
+ustrad0070,Retail,"Domestic Trade, Retail Trade, Retail Sales, Total, Calendar Adjusted, SA, USD",12,1,3,3m growth (%),log + diff
+usprod1071,CU,"Capacity Utilization, Percent of Capacity, SA",12,1,2,3m change (absolute),diff
+usprod1022,IP,"Industrial Production, Total, SA, Index",12,1,3,3m growth (%),log + diff
+uspric2156,CPI,"Consumer Price Index, All Urban Consumers, U.S. City Average, All Items, SA",12,1,4,3m change of yearly growth rate (%),log + diff
+uscons1156,HsgStarts,"Construction by Status, Construction Started, Residential, New Privately Owned, Total, SA, AR",12,1,3,3m growth (%),
+ussurv1102,PhilBO,"Business Surveys, Federal Reserve Bank of Philadelphia, Business Outlook Survey, Manufacturing, Current General Activity, Diffusion, SA",12,0,2,3m change (absolute),
+uscons1146,HsgPermits,"Construction by Status, Permits, Residential, National, New Privately Owned, Total, SA, AR",12,1,3,3m growth (%),
+usprod1501,UnfOrd,"Unfilled Orders, Durable Goods, Total, All, SA, USD",12,1,3,3m growth (%),
+usprod1385,NewOrd,"New Orders, Durable Goods, Total, All, SA, USD",12,1,3,3m growth (%),
+usprod0805,Inventories,"Manufacturers' Inventories, Total, Durable Goods, All, All, Current Prices, SA, USD",12,1,3,3m growth (%),
+usnaac0169,GDP,"Gross Domestic Product, Total, Constant Prices, SA, Chained, AR, USD",4,1,3,3m growth (%),
+usnaac0591,RPCE,"Expenditure Approach, Personal Consumption Expenditures, Total, Constant Prices, SA, Index",12,1,3,3m growth (%),
+bea037_76a067rx_m,RDPI,"BEA, Personal Income & Its Disposition, Addenda, Disposable Personal Income: Total, Billions Of Chained (2009) Dollars, SA, AR, USD",12,1,3,3m growth (%),
+ussurv1363,BizBarom,"Business Surveys, ISM Chicago, Chicago Business Barometer, Business Barometer, SA",12,0,2,3m change (absolute),
+ussurv1459,CsmConf,"Consumer Surveys, Conference Board, Consumer Confidence Index, Total, Total, SA",12,0,2,3m change (absolute),

@@ -1,0 +1,2 @@
+#creates a minimal view (period_date, forecast, run_id, timestamp) of gdp forecasts and their evolution over time
+CREATE VIEW gdp_fcst_over_all_runs_v AS SELECT t1.period_date, t1.mean_forecast as forecast, t1.run_id, t5.timestamp as timestamp from forecast_data t1 LEFT JOIN (indicators t2) ON (t2.indicator_id = t1.indicator_id) LEFT JOIN (run_table t5) ON (t5.run_id = t1.run_id) where t2.vendor_key = 'usnaac0169' order by t5.timestamp DESC;
