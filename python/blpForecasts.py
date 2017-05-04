@@ -26,6 +26,7 @@ class blpForecasts(object):
     def __init__(self, path:str = "/repos/Nowcast/", dev:bool=False):
         logging.info("Initiate the Bloomberg API")
         self.path = path
+        self.dev = dev
 
         ## -- Config File -- ##
         self.getConfig()
