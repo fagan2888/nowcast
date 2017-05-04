@@ -68,10 +68,10 @@ class blpForecasts(object):
 
         ## -- Codes for the Variables in Bloomberg -- ##
         ## Link up codes(variables) with indicator_id in our database
-        codes = {"GD": "GDP", "PI": "CPI", "UP": "Unemployment", "BB": "Budget Balance", "CA": "Current Account", "3M": "3-Month rate", "CB": "Central Bank Rate"}
-        #codes = {"GD": "GDP", "PI": "CPI", "UP": "Unemployment"} # Restrcit variables of interest
-        country = {"US": "USA", "GB": "United Kingdom", "DK": "Denmark", "AR":"Argentina"} ## OBS: Only active codes... ISO alpha-2 codes???
-        #country = {"US": "USA"}
+        #codes = {"GD": "GDP", "PI": "CPI", "UP": "Unemployment", "BB": "Budget Balance", "CA": "Current Account", "3M": "3-Month rate", "CB": "Central Bank Rate"}
+        codes = {"GD": "GDP", "PI": "CPI", "UP": "Unemployment"} # Restrcit variables of interest
+        #country = {"US": "USA", "GB": "UK", "DK": "DNK", "AR":"ARG"} ## OBS: Only active codes... ISO alpha-2 codes???
+        country = {"US": "USA"}
 
         now = datetime.datetime.now()
 
