@@ -49,6 +49,18 @@ class blpForecasts(object):
         self.host = self.config[dbname].get("db_host")
 
     def getForecastTickers(self):
+        query  = """SELECT\n count(*)\n FROM\n\t information_schema.tables"""
+        query += """\nWHERE\n\t table_schema = '{0}'""".format(self.db_name)
+        query += """\nAND\n\t table_name = '{0}';""".format("blp_fcst_meta")
+        response = self.engine.execute(query)
+        check = response.fetchall()[0]
+        if (sum(check) == 0):
+            logging.info("Table blp_fcst_meta does not exists - create it")
+            self.createTableMeta()
+        elif (sum(check) > 1):
+            msg = "Error Too many tables: {0}\n{1}".format(sum(check), check)
+            raise ValueError(msg)
+
         filename = self.path + "data/Bloomberg Forecasts.xlsx"
         tickers = pd.read_excel(io=filename, sheetname="Sheet1")
         ## Check if relevant providers are active!
@@ -115,6 +127,10 @@ class blpForecasts(object):
         query = "DROP TABLE IF EXISTS blp_fcst_meta CASCADE;"
         self.engine.execute(query)
 
+        self.createTableMeta()
+        self.createTableData()
+
+    def createTableMeta(self):
         ## -- Reset meta Table -- ##
         query = "CREATE TABLE\n\tblp_fcst_meta ("
         query += "\n\t\tticker varchar(25) NOT NULL UNIQUE"
@@ -128,6 +144,7 @@ class blpForecasts(object):
         query += ")\nCHARACTER SET=utf8\n;"
         self.engine.execute(query)
 
+    def createTableData(self):
         ## -- Reset data Table -- ##
         query = "CREATE TABLE blp_fcst_data\n\t("
         query += "\n\t\tticker varchar(25) NOT NULL"
@@ -153,6 +170,18 @@ class blpForecasts(object):
         logging.info("All done")
 
     def getData(self, newTable:bool=False):
+        query  = """SELECT\n count(*)\n FROM\n\t information_schema.tables"""
+        query += """\nWHERE\n\t table_schema = '{0}'""".format(self.db_name)
+        query += """\nAND\n\t table_name = '{0}';""".format("blp_fcst_data")
+        response = self.engine.execute(query)
+        check = response.fetchall()[0]
+        if (sum(check) == 0):
+            logging.info("Table blp_fcst_data does not exists - create it")
+            self.createTableData()
+        elif (sum(check) > 1):
+            msg = "Error Too many tables: {0}\n{1}".format(sum(check), check)
+            raise ValueError(msg)
+
         ## Move to config file???
         outputNames = {}
         outputNames["PX_LAST"] = {"name": "value", "dtype": np.float64}
