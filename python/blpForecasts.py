@@ -23,9 +23,10 @@ import calendar
 #import mysql.connector
 
 class blpForecasts(object):
-    def __init__(self, path = "/Nowcast/"):
+    def __init__(self, path:str = "/repos/Nowcast/", dev:bool=False):
         logging.info("Initiate the Bloomberg API")
         self.path = path
+
         ## -- Config File -- ##
         self.getConfig()
 
@@ -33,14 +34,18 @@ class blpForecasts(object):
         self.engine = sqlalchemy.create_engine('mysql+mysqlconnector://{0}:{1}@{2}/{3}'.format(self.user, self.password, self.host, self.db_name))
         self.blpAPI = bloombergAPI()
 
-    def getConfig(self, path = "/Nowcast/"):
+    def getConfig(self, path = "/repos/Nowcast/"):
         pathfile = path + 'config/configNowcasting.ini'
         self.config = configparser.ConfigParser()
         self.config.read(pathfile)
-        self.user = self.config["DATABASE"].get("db_user")
-        self.password = self.config["DATABASE"].get("db_password")
-        self.db_name = self.config["DATABASE"].get("db_name")
-        self.host = self.config["DATABASE"].get("db_host")
+        if self.dev:
+            dbname = "DATABASE_DEV"
+        else:
+            dbname = "DATABASE_UAT"
+        self.user = self.config[dbname].get("db_user")
+        self.password = self.config[dbname].get("db_password")
+        self.db_name = self.config[dbname].get("db_name")
+        self.host = self.config[dbname].get("db_host")
 
     def getForecastTickers(self):
         filename = self.path + "data/Bloomberg Forecasts.xlsx"
@@ -51,9 +56,9 @@ class blpForecasts(object):
         ## -- Codes for the Variables in Bloomberg -- ##
         ## Link up codes(variables) with indicator_id in our database
         codes = {"GD": "GDP", "PI": "CPI", "UP": "Unemployment", "BB": "Budget Balance", "CA": "Current Account", "3M": "3-Month rate", "CB": "Central Bank Rate"}
-        codes = {"GD": "GDP", "PI": "CPI", "UP": "Unemployment"} # Restrcit variables of interest
+        #codes = {"GD": "GDP", "PI": "CPI", "UP": "Unemployment"} # Restrcit variables of interest
         country = {"US": "USA", "GB": "United Kingdom", "DK": "Denmark", "AR":"Argentina"} ## OBS: Only active codes... ISO alpha-2 codes???
-        country = {"US": "USA"}
+        #country = {"US": "USA"}
 
         now = datetime.datetime.now()
 
@@ -195,7 +200,7 @@ if __name__ == "__main__":
     parser.add_argument('--newdb', dest='newdb', default=0, type=int, help='Reset the database T/F')
     args = parser.parse_args()
     try:
-        forecasts = blpForecasts()
+        forecasts = blpForecasts(dev=True)
         if False:
             forecasts.resetAllData()
         else:

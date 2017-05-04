@@ -38,7 +38,7 @@ class msKloFlowETFService(win32serviceutil.ServiceFramework):
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
         try:
             self.config = configparser.ConfigParser()
-            self.config.read('/Nowcast/Model/python/config/configNowcasting.ini')
+            self.config.read('/repos/Nowcast/config/configNowcasting.ini')
         except Exception as e:
             servicemanager.LogErrorMsg(traceback.format_exc())
             logging.info("Error in init: %s", e)
