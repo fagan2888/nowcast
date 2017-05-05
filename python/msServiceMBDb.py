@@ -21,9 +21,9 @@ from pytz import timezone
 from msDbaseInterface import msMBDbInterface
 from mainMixed import nowcastModel
 
-class msMBDbService(win32serviceutil.ServiceFramework):
+class msServiceMBDb(win32serviceutil.ServiceFramework):
     """A service that polls the database checking when the next release date is"""
-    _svc_name_ = "msMBDbService"
+    _svc_name_ = "msServiceMBDb"
     _svc_display_name_ = "Macrosynergy Macrobond DB Service"
     _svc_description_ = "This service queries the Macrosynergy economic indicator database, checks if there are any releases due"
 
@@ -235,4 +235,4 @@ def ctrlHandler(ctrlType):
 
 if __name__ == '__main__':
    win32api.SetConsoleCtrlHandler(ctrlHandler, True)
-   win32serviceutil.HandleCommandLine(msMBDbService)
+   win32serviceutil.HandleCommandLine(msServiceMBDb)

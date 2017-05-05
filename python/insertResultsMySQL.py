@@ -20,7 +20,8 @@ class insertResultsMySQL (msDbInterface):
     __version__ = "0.0.2"
     __name__ = "__insertResultsMySQL__"
 
-    def __init__(self, forecast, configPath = "python\\model\\config\\"):
+    def __init__(self, forecast, configPath = "python\\model\\config\\", dev=False):
+        self.dev = dev
         self.configPath = configPath
         self.getConfig()
         msDbInterface.__init__(self, user=self.user, password=self.password, host=self.host, db_name=self.db_name)
@@ -29,10 +30,14 @@ class insertResultsMySQL (msDbInterface):
     def getConfig(self):
         self.config = configparser.ConfigParser()
         self.config.read(self.configPath + 'configNowcasting.ini')
-        self.user = self.config["DATABASE"].get("db_user")
-        self.password = self.config["DATABASE"].get("db_password")
-        self.db_name = self.config["DATABASE"].get("db_name")
-        self.host = self.config["DATABASE"].get("db_host")
+        if self.dev:
+            dbname = "DATABASE_UAT"
+        else:
+            dbname = "DATABASE_DEV"
+        self.user = self.config[dbname].get("db_user")
+        self.password = self.config[dbname].get("db_password")
+        self.db_name = self.config[dbname].get("db_name")
+        self.host = self.config[dbname].get("db_host")
 
     def uploadResults(self, forecast):
         ## -- Results: Mean Forecast -- ##

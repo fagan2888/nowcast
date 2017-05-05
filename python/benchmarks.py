@@ -36,6 +36,47 @@ class benchmark(object):
         self.host = self.config[dbname].get("db_host")
 
     def getBenchmarks(self):
+        # OBS: Remove back cast??? Or change how they are presented...
+        query = """
+            SELECT
+            	d1.period_date AS forecast_period, date(d1.timestamp) AS release_date, d1.mean_forecast
+            FROM
+            	(
+            	SELECT
+            		tb4.period_date, tb4.indicator_id, tb4.mean_forecast, tb4.run_id, tb4.indicator_short_info, tb4.forecast_type, tb5.timestamp
+            	FROM
+            	(
+            		SELECT
+            			tb1.period_date, tb1.indicator_id, tb1.mean_forecast, tb1.run_id, tb2.indicator_short_info, tb3.forecast_type
+            		FROM
+            			forecast_data as tb1
+            		LEFT JOIN
+            			indicators as tb2
+            		ON tb1.indicator_id = tb2.indicator_id
+            		LEFT JOIN
+            			forecast_types AS tb3
+            		ON tb1.forecast_type_id = tb3.forecast_type_id
+            	) AS tb4
+            	LEFT JOIN
+            		run_table AS tb5
+            	ON
+            		tb4.run_id = tb5.run_id
+            	WHERE
+            		indicator_id = 20
+            	AND
+            		month(tb4.period_date) % 3 = 0
+            	) AS d1
+            LEFT JOIN
+            	(SELECT date(timestamp) AS datestamp, max(run_id) AS run_id FROM run_table GROUP BY date(timestamp)) AS d2
+            ON
+            	date(d1.timestamp) = d2.datestamp
+            WHERE
+            	d1.run_id = d2.run_id
+            ;
+            """
+        nowcast= pd.read_sql(sql=query, con=self.cnx)
+        nowcastPlot = nowcast.pivot(index="release_date", columns="forecast_period", values="mean_forecast")
+
         ## -- Get the indicators of the series -- ##
         query = """
                 SELECT
@@ -65,78 +106,57 @@ class benchmark(object):
         xMax = fcst.ix[filterVar, "release_date"].max()
         filterCC = filterVar & (fcst["provider"] != "BLP_mean")
 
-        ySeriesMin = pd.pivot_table(data=fcst.ix[filterCC], index="release_date", columns="forecast_period", values="value", aggfunc=np.min)
-        ySeriesMax = pd.pivot_table(data=fcst.ix[filterCC], index="release_date", columns="forecast_period", values="value", aggfunc=np.max)
-        #ySeriesQ75 = pd.pivot_table(data=fcst.ix[filterCC], index="release_date", columns="forecast_period", values="value", aggfunc=np.percentile)
-
-
-        # row and column sharing: Fixed to three period forecast or current year forecast?
-        fig, axarr = plt.subplots(2, 2, num=1)
-        """
-        ax1.plot(x, y)
-        ax1.set_title('Sharing x per column, y per row')
-        ax2.scatter(x, y)
-        ax3.scatter(x, 2 * y ** 2 - 1, color='r')
-        ax4.plot(x, 2 * y ** 2 - 1, color='r')
-        """
-        #fig = plt.figure(num=1, figsize=(5,5))
-        lines=[]; labels=[];
-        #for num, ii in enumerate(range(0,4)):
-        #    print("num: {0}, row: {1}, col: {2}".format(num, row, col))
-        #    print(axarr[row, col])
-
         for num, tt in enumerate(periods):
-            row = int(np.floor(num/2))
-            col = int(num - 2*row)
-            ax = axarr[row, col]
-            # 0: {np.floor(num/2), num - np.floor(num/2)}, 1: {0,1}, 2: {1,0}, 3: {1,1}
+            fig = plt.figure(num=1, figsize=(5, 5))
+            ax = fig.add_subplot(111)
+            lines=[]; labels=[];
+
             filterTT = filterVar & (fcst["forecast_period"] == tt)
             FILTER = filterTT & (fcst["provider"] == "BLP_mean")
             ax.plot(fcst.ix[FILTER, "release_date"], fcst.ix[FILTER, "value"], label="Bloomberg Mean Forecast", lw=3, c='g', zorder=10)
+            ax.plot(nowcastPlot[tt].index, nowcastPlot[tt], label="MSP Nowcast Model", lw=3, c='r', zorder=20)
 
-            data = fcst[filterTT].pivot(index="release_date", columns="provider", values="value")
+            data = fcst[filterTT & (fcst["provider"] != "BLP_mean")].pivot(index="release_date", columns="provider", values="value")
+            yMin = data.min().min()
+            yMax = data.max().max()
+
+            xMin = min((data.index.min().date(), fcst.ix[FILTER, "release_date"].min().date(), nowcastPlot[tt].index.min()))
+            xMax = max((data.index.max().date(), fcst.ix[FILTER, "release_date"].max().date(), nowcastPlot[tt].index.max()))
+
             dateRange = sorted(data.index)
             for num, rr in enumerate(dateRange):
                 if num > 0:
                     check = np.isnan(data.ix[rr, :])
                     data.ix[rr, check] = data.ix[dateRange[num-1], check]
+            aalpha = 0.
+            for qq in [5, 10, 20, 25, 30, 50]:
+                aalpha += 0.05
+                ax.fill_between(
+                    data.index, data.quantile(q=qq/200, axis=1), data.quantile(q=1-qq/200, axis=1),
+                    alpha=aalpha, facecolor='b', edgecolor=None, zorder=1, label="Bloomberg ${0}\%$".format(100-qq)
+                    )
 
-            ax.fill_between(data.index, data.quantile(q=0.025, axis=1), data.quantile(q=0.975, axis=1), alpha=0.05, facecolor='b', edgecolor=None, zorder=1, label="$95\%$")
-            ax.fill_between(data.index, data.quantile(q=0.05, axis=1), data.quantile(q=0.95, axis=1), alpha=0.10, facecolor='b', edgecolor=None, zorder=1, label="$90\%$")
-            ax.fill_between(data.index, data.quantile(q=0.10, axis=1), data.quantile(q=0.90, axis=1), alpha=0.15, facecolor='b', edgecolor=None, zorder=1, label="$80\%$")
-            ax.fill_between(data.index, data.quantile(q=0.125, axis=1), data.quantile(q=0.875, axis=1), alpha=0.20, facecolor='b', edgecolor=None, zorder=1, label="$75\%$")
-            ax.fill_between(data.index, data.quantile(q=0.15, axis=1), data.quantile(q=0.85, axis=1), alpha=0.25, facecolor='b', edgecolor=None, zorder=1, label="$70\%$")
-            ax.fill_between(data.index, data.quantile(q=0.25, axis=1), data.quantile(q=0.75, axis=1), alpha=0.3, facecolor='b', edgecolor=None, zorder=1, label="$50\%$")
-
-            ax.plot([xMin, xMax], [0,0], c='k', lw=0.5)
+            ax.plot([xMin, xMax], [0,0], c='k', lw=0.5, zorder=5)
 
             ax.set_ylim(ymin=yMin, ymax=yMax)
             ax.set_xlim(xmin=xMin, xmax=xMax)
             hh, ll = ax.get_legend_handles_labels()
             lines += hh; labels += ll
-            titleName = "{0:%Y}-Q{1:d}".format(tt, int(np.ceil(tt.month/3)))
-            if row == 1:
-                bottomAxis = True
-            else:
-                bottomAxis=False
-            if col == 0:
-                leftAxis = True
-            else:
-                leftAxis = False
-            plt.xticks(rotation=45)
-            ax = self.plotLayout(ax=ax, titleName=titleName, bottomAxis=bottomAxis, leftAxis=leftAxis)
 
-        by_label = dict(zip(labels, lines))
-        plt.legend(by_label.values(), by_label.keys(), loc = 'lower center', ncol=3, frameon=False, fontsize=9, bbox_to_anchor=(0.5, -0.1), bbox_transform = plt.gcf().transFigure)
-        plt.tight_layout()
-        #plt.legend()
-        filename = "benchmark.svg"
-        plt.savefig(filename, dpi=1000, frameon=False, transparent=True, bbox_inches='tight')
-        plt.show()
+            titleName = "Forecast: {0:%Y}-Q{1:d}".format(tt, int(np.ceil(tt.month/3)))
+            ax = self.plotLayout(ax=ax, titleName=titleName)
 
-    def plotLayout(self, ax, titleName:str, leftAxis:bool=True, bottomAxis:bool=True, ylabelName:str="$\%$-SAAR"):
+            by_label = dict(zip(labels, lines))
+            plt.legend(by_label.values(), by_label.keys(), loc = 'lower center', ncol=3, frameon=False, fontsize=9, bbox_to_anchor=(0.5, -0.1), bbox_transform = plt.gcf().transFigure)
+            plt.tight_layout()
+
+            filename = "tmp/benchmark_{0:%Y}-Q{1:d}.png".format(tt, int(np.floor(tt.month/3)))
+            plt.savefig(filename, dpi=1000, frameon=False, transparent=True, bbox_inches='tight')
+            plt.close()
+
+
+    def plotLayout(self, ax, titleName:str, ylabelName:str="$\%$-SAAR"):
         ax.set_title(titleName, fontsize=12)
-
 
         ax.spines['top'].set_linewidth(0.5)
         ax.spines['right'].set_linewidth(0.5)
@@ -147,11 +167,9 @@ class benchmark(object):
         ax.spines['bottom'].set_visible(False)
         ax.get_xaxis().tick_bottom()
 
-        #if leftAxis:
         ax.spines['right'].set_visible(False)
         ax.get_yaxis().tick_left()
-        if leftAxis:
-            ax.set_ylabel(ylabelName)
+        ax.set_ylabel(ylabelName)
         plt.grid(False)
         plt.xticks(rotation=45)
 
@@ -166,6 +184,6 @@ if __name__ == "__main__":
     logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
 
     os.chdir("/repos/Nowcast/")
-    benchmark = benchmark(dev=True)
+    benchmark = benchmark(dev=False)
     #data.getModelData()
     #data.forecastGDP()

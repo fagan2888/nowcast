@@ -27,9 +27,9 @@ import datetime
 ## -- Own Modules -- ##
 from blpForecasts import blpForecasts
 
-class msKloFlowETFService(win32serviceutil.ServiceFramework):
+class msServiceBLPforecast(win32serviceutil.ServiceFramework):
     """A service that polls the database checking when the next release date is"""
-    _svc_name_ = "msBLPforecastService"
+    _svc_name_ = "msServiceBLPforecast"
     _svc_display_name_ = "Macrosynergy Forecasts Bloomberg Service"
     _svc_description_ = "This service downloads the Macro Forecasts from Bloomberg."
 
@@ -62,7 +62,7 @@ class msKloFlowETFService(win32serviceutil.ServiceFramework):
         sender = self.config['EMAIL']['email_sender']
         receiver = self.config['EMAIL']['email_error_recv']
         msg = EmailMessage()
-        msg['Subject'] = "KloFlow Update: Bloomberg Macro Forecasts data"
+        msg['Subject'] = "Nowcasting Update: Bloomberg Macro Forecasts data"
         msg['From'] = sender
         msg['To'] = receiver
 
@@ -74,7 +74,7 @@ class msKloFlowETFService(win32serviceutil.ServiceFramework):
         server.quit()
 
     def SvcStop(self):
-        logging.info("msKloFlowETFService stopped")
+        logging.info("msBLPforecastService stopped")
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         win32event.SetEvent(self.hWaitStop)
 
@@ -132,4 +132,4 @@ if __name__ == '__main__':
         logging.info("Argument {0:d}: {1:s}".format(count, ii))
 
     win32api.SetConsoleCtrlHandler(ctrlHandler, True)
-    win32serviceutil.HandleCommandLine(msKloFlowETFService)
+    win32serviceutil.HandleCommandLine(msServiceBLPforecast)

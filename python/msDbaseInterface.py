@@ -212,11 +212,23 @@ class msMBDbInterface(msDbInterface):
 
     def available_updates(self):
         logging.info("Retrieving available updates")
-        query = '''SELECT t2.vendor_key FROM (SELECT indicator_id, if(min(next_release) = '1900-01-01',
-        STR_TO_DATE('3000-01-01 00:00', '%Y-%m-%d %H:%i'),
-        max(next_release)) AS next_release FROM data
-        GROUP BY indicator_id) AS release_times LEFT JOIN indicators t2 ON t2.indicator_id = release_times.indicator_id
-         WHERE convert_tz(release_times.next_release, 'UTC', 'Europe/London') <= now()'''
+        query = '''SELECT d1.vendor_key FROM indicators AS d1
+            LEFT JOIN (SELECT t2.vendor_key FROM (SELECT
+            indicator_id, if(min(next_release) = '1900-01-01',
+            STR_TO_DATE('3000-01-01 00:00', '%Y-%m-%d %H:%i'),
+            max(next_release)) AS next_release
+            FROM data GROUP BY indicator_id) AS release_times
+            LEFT JOIN indicators t2 ON t2.indicator_id = release_times.indicator_id
+            WHERE convert_tz(release_times.next_release, 'UTC', 'Europe/London') <= now()
+            ) AS d2 ON d1.vendor_key = d2.vendor_key
+            LEFT JOIN (SELECT t2.vendor_key
+            FROM data AS t1 RIGHT JOIN indicators AS t2
+            ON t1.indicator_id = t2.indicator_id
+            WHERE t1.indicator_id IS NULL) AS d3
+            ON d1.vendor_key = d3.vendor_key
+            WHERE d2.vendor_key IS NOT NULL OR d3.vendor_key IS NOT NULL
+            ;'''
+
         self.cursor.execute(query)
         vendor_keys = list(self.cursor.fetchall())
         logging.info("Complete")

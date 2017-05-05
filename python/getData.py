@@ -15,7 +15,7 @@ from msDbaseInterface import msDbInterface
 
 
 class getData(msDbInterface):
-    def __init__(self, configPath='/nowcast/config/'):
+    def __init__(self, configPath='/repos/nowcast/config/'):
         self.configPath = configPath
         self.getConfig()
         msDbInterface.__init__(self, user=self.user, password=self.password, host=self.host, db_name=self.db_name)
