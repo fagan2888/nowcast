@@ -1,148 +1,131 @@
 #!/bin/usr/python3
+import logging
+import socket
+import datetime
+import os
+if __name__ == "__main__":
+    now = datetime.datetime.now()
+    os.chdir("/repos/Nowcast/")
+    log_filename = '/repos/Nowcast/logs/{0:%Y-%m-%d}_MS_Investigate_logfile_{1}.log'.format(now, socket.gethostname())
+    FORMAT = '%(asctime)-15s %(funcName)s %(lineno)d %(message)s'
+    logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
+
 import numpy as np
 import pandas as pd
 import mysql.connector
 import sys
-import logging
-import time
-import socket
 import configparser
-import os
-import sys
+import traceback
+import sqlalchemy
 
+## MSP modules
 from msDbaseInterface import msDbInterface
 
 
-
 class getData(msDbInterface):
-    def __init__(self, configPath='/repos/nowcast/config/'):
+    def __init__(self, configPath:str='/repos/nowcast/config/', dev:bool=False):
+        ## retweek to give model_id:int as input?
         self.configPath = configPath
+        self.dev = dev
         self.getConfig()
         msDbInterface.__init__(self, user=self.user, password=self.password, host=self.host, db_name=self.db_name)
-        self.getModelData()
 
     def getConfig(self):
-        self.config = configparser.ConfigParser()
-        self.config.read(self.configPath + 'configNowcasting.ini')
+        config = configparser.ConfigParser()
+        config.read(self.configPath + 'configNowcasting.ini')
 
-        self.user = self.config["DATABASE"].get("db_user")
-        self.password = self.config["DATABASE"].get("db_password")
-        self.db_name = self.config["DATABASE"].get("db_data")
-        self.host = self.config["DATABASE"].get("db_host")
+        ## -- DATABASE -- ##
+        if self.dev:
+            dbname = "DATABASE_DEV"
+        else:
+            dbname = "DATABASE_UAT"
+        self.user = config[dbname].get("db_user")
+        self.password = config[dbname].get("db_password")
+        self.db_name = config[dbname].get("db_name")
+        self.host = config[dbname].get("db_host")
 
-        ## -- Variables -- ##
-        self.configVariables = configparser.ConfigParser()
-        self.configVariables.read(self.configPath + 'configNowcastingVariables.ini')
+        ## -- MODELS -- ##
+        self.modelID = {}
+        for key in config["MODELS"]:
+            self.modelID[key] = config["MODELS"].getint(key)
 
-        indexVar = [nn for nn in self.configVariables.sections()]
-        self.variables = pd.DataFrame(index=indexVar, columns=["Type", "transformationCode", "presentationUnits", "units", "includeModel", "name", "frequency", "retransformation"])
-        self.variables["includeModel"] = self.variables["includeModel"].astype('bool')
+    def getModelData(self, modelID:int =1):
+        ## OBS: Add model_id as input variable!
+        engine = sqlalchemy.create_engine('mysql+mysqlconnector://{0}:{1}@{2}/{3}'.format(self.user, self.password, self.host, self.db_name))
 
-        for nn in self.configVariables.sections():
-            pick = self.configVariables[nn]
-            self.variables.ix[nn, "Type"] = pick.get("Type")
-            self.variables.ix[nn, "transformationCode"] = pick.get("transformationCode")
-            self.variables.ix[nn, "presentationUnits"] = pick.get("presentationUnits")
-            self.variables.ix[nn, "units"] = pick.get("units")
-            self.variables.ix[nn, "includeModel"] = pick.getboolean("includeModel")
-            self.variables.ix[nn, "name"] = pick.get("name")
-            self.variables.ix[nn, "frequency"] = pick.get("frequency")
-            self.variables.ix[nn, "retransformation"] = pick.get("retransformation")
+        ## -- Get the Frequencies -- ##
+        query  = "SELECT\n\tt1.indicator_id, t1.frequency_id, t2.transformation_code, t2.presentation_code"
+        query += "\nFROM\n\tindicators AS t1"
+        query += "\nLEFT JOIN\n\tmodel_indicators AS t2"
+        query += "\nON\n\tt1.indicator_id = t2.indicator_id"
+        query += "\nWHERE\n\t t2.model_id = {0}".format(modelID)
+        query += "\nAND\n\tt2.indicator_id IS NOT NULL"
+        query += "\nORDER BY\n\tt1.frequency_id ASC, t1.indicator_id ASC"
+        query += "\n;"
+        meta = pd.read_sql(sql=query, con=engine, index_col="indicator_id")
 
-        self.variables["transformationCode"] = self.variables["transformationCode"].astype('int')
-        self.variables["retransformation"] = self.variables["retransformation"].astype('int')
+        ## -- Model options -- ##
+        query  = "SELECT\nt2.variable_name, t1.control_values"
+        query += "\nFROM\n\tmodel_controls AS t1"
+        query += "\nLEFT JOIN\n\tcontrol_variables AS t2"
+        query += "\nON\n\tt1.control_id = t2.variable_id\nWHERE\n\tt1.model_id =1\n;"
+        response = engine.execute(query)
+        options = {}
+        for row in response:
+            options[row[0]] = row[1]
+        options["NyQ"] = np.sum(meta["frequency_id"] == 10)
+        options["NyM"] = np.sum(meta["frequency_id"] == 7)
 
-        ## -- Options -- ##
-        self.options = {}
-        self.options["low"] = self.config["options"].getint("low")
-        self.options["high"] = self.config["options"].getint("high")
-        self.options["hor"] = self.config["options"].getint("hor")
-        self.options["max_iter"] = self.config["options"].getint("max_iter")
-        self.options["qlag"] = self.config["options"].getint("qlag")
-        self.options["plag"] = self.config["options"].getint("plag")
-        self.options["Nx"] = self.config["options"].getint("Nx")
+        ## -- Get the data -- ##
+        query  = """SELECT\n\t t1.indicator_id, t1.period_date, t1.value"""
+        query += "\nFROM\n\tdata AS t1\nLEFT JOIN\n\tmodel_indicators AS t2"
+        query += "\nON\n\tt1.indicator_id = t2.indicator_id"
+        query += "\nWHERE\n\t t2.model_id = {0}".format(modelID)
+        query += "\nAND\n\tt2.indicator_id IS NOT NULL\nAND\n\tt1.latest = 1"
+        query += "\nAND\n\tyear(t1.period_date) > 1990\n;"
+        data = pd.read_sql(sql=query, con=engine)
+        data = data.pivot(columns="indicator_id", index="period_date", values="value")[meta.index.values]
 
-    def getVendorKeys(self):
-        ## -- Get the indicators of the series -- ##
-        query = """
-            SELECT  indicator_id, vendor_key
-            FROM    indicators
-            WHERE   country_id = {0};
-            """.format(self.config["options"].get("country_id"))
-
-        self.vendor_keys = pd.read_sql(sql=query, con=self.cnx)
-
-    def getModelData(self):
-        self.getVendorKeys()
-
-        ## -- Get the data --- ##
-        query = """SELECT period_date"""
-
-        ## -- The Monthly data -- ##
-        FILTER = (self.variables["frequency"] == "M") & (self.variables["includeModel"])
-        self.options["nyM"] = self.variables[FILTER].shape[0]
-
-        ## -- OBS: Change how the order is created
-        for key in self.variables[FILTER].index:
-            query +=  ", MAX(IF(vendor_key = '{0}', value, Null)) AS '{0}'".format(key)
-
-        ## -- The Quarterly data -- ##
-        FILTER = (self.variables["frequency"] == "Q") & (self.variables["includeModel"])
-        self.options["nyQ"] = self.variables[FILTER].shape[0]
-        for key in self.variables[FILTER].index:
-            query +=  ", MAX(IF(vendor_key = '{0}', value, Null)) AS '{0}'".format(key)
-
-        query += """
-                FROM data_series_v
-                WHERE year(period_date) > 1990
-                AND latest = True
-                GROUP BY period_date
-                ORDER BY period_date;
-            """
-        data = pd.read_sql(sql=query, con=self.cnx)
-
-        ## -- Alternative -- ##
-        query = "SELECT period_date, vendor_key, value FROM data_series_v WHERE year(period_date) > 1990 AND latest=True"
-        data = pd.read_sql(sql=query, con=self.cnx)
-        SELECT = self.variables[self.variables["includeModel"]].index.values
-        FILTER = data["vendor_key"].map(lambda x: x in SELECT)
-        data = data[FILTER].pivot(index="period_date", columns="vendor_key", values="value")
-
-        for nn in ["Surveys", "Production and Trade", "Labour Market", "Consumption and Income"]:
-                filterType = FILTER & (self.variables["Type"] == nn)
-        FILTER = (self.variables["frequency"] == "M") & self.variables["includeModel"]
-        select = []
-        for nn in ["Surveys", "Production and Trade", "Labour Market", "Consumption and Income"]:
-                filterType = FILTER & (self.variables["Type"] == nn)
-                select = np.concatenate((select, self.variables[filterType].index.values), axis=0)
-        dataM = data[select]
-
-        FILTER = (self.variables["frequency"] == "Q") & self.variables["includeModel"]
-        select = self.variables[FILTER].index.values
-
-        dataQ = data[select]
-        data = pd.merge(dataM, dataQ, left_index=True, right_index=True, how='outer')
-
-
-        ## -- Release datess -- ##
-        query = """
-            SELECT  vendor_key,
-                max(release_date) AS release_date,
-                max(next_release) AS next_release
-            FROM data_series_v
-            WHERE vintage=1
-            GROUP BY vendor_key;
-        """
-
-        ## Retrive the data ##
-        self.dataNextRelease = pd.read_sql(sql=query, con=self.cnx)
 
         ## -- Transform the data -- ##
-        self.dataRaw = data
-        self.dataModel, self.dataPresent = self.transformData(dataFrame=data)
-        if (self.dataRaw.shape[1] != self.dataModel.shape[1]):
-            logging.error("\nRaw data N: {0:d}\nModel data N: {1:d}".format(self.dataRaw.shape[1], self.dataModel.shape[1]))
-            raise ValueError
+        dataModel = self.transformData(dataFrame=data, meta=meta, transform="transformation_code")
+        dataPresent = self.transformData(dataFrame=data, meta=meta, transform="presentation_code")
+
+        return dataModel, dataPresent, options
+
+    def transformData(self, dataFrame:pd.core.frame.DataFrame, meta:pd.core.frame.DataFrame, transform:str="transformation_code"):
+        data = dataFrame.copy()
+        ## -- code 0: No transform (x_{t})-- ##
+
+        ## -- code 1: log-transform (log(x_{t})-- ##
+        select = meta[(meta[transform] == 1)].index
+        data.ix[:, select] = np.log(data.ix[:, select])
+
+        ## -- Code 2: 1month level differences (\Delta_{1}x_{t}) -- ##
+        select = meta[(meta["transformation_code"] == 2)].index
+        data.ix[:, select] = data.ix[:, select].diff(periods=1, axis=0)
+
+        ## -- Code 3: 1month level differences (\Delta_{3}x_{t}) -- ##
+        select = meta[(meta["transformation_code"] == 3)].index
+        data.ix[:, select] = data.ix[:, select].diff(periods=3, axis=0)
+
+        ## -- Code 4: 1month level differences (\Delta_{12}x_{t}) -- ##
+        select = meta[(meta["transformation_code"] == 4)].index
+        data.ix[:, select] = data.ix[:, select].diff(periods=12, axis=0)
+
+        ## -- Code 5: MoM Growth rate (100 \Delta_{1}\log(x_{t})) -- ##
+        select = meta[(meta["transformation_code"] == 5)].index
+        data.ix[:, select] = 100*np.log(data.ix[:, select]).diff(periods=1, axis=0)
+
+        ## -- Code 6: QoQ annualised (400\Delta_{3}\log(x_{t})) -- ##
+        select = meta[(meta["transformation_code"] == 6)].index
+        data.ix[:, select] = 400*np.log(data.ix[:, select]).diff(periods=3, axis=0)
+
+        ## -- Code 7: Change of change (100 \Delta_{3}\Delta_{12}\log(x_{t})) -- ##
+        select = meta[(meta["transformation_code"] == 7)].index
+        data.ix[:, select] = 100*np.log(data.ix[:, select]).diff(periods=12, axis=0).diff(periods=3, axis=0)
+
+        return data
 
     def forecastGDP(self):
         query = """
@@ -168,54 +151,15 @@ class getData(msDbInterface):
         dataForecast = pd.read_sql(sql=query, con=self.cnx)
         return dataForecast
 
-
-    def transformData(self, dataFrame):
-        Ty, Ny = dataFrame.shape
-        dataModel = dataFrame.copy()
-        dataPresent = dataFrame.copy()
-
-        ## -- Code: 1 log transformation -- ##
-        FILTER = (self.variables["transformationCode"] == 1) & self.variables["includeModel"]
-        select = self.variables[FILTER].index.values
-        dataModel[select] = np.log(dataModel[select])
-
-        ## -- Code: 2 Level differences -- ##
-        FILTER = (self.variables["transformationCode"] == 2) & self.variables["includeModel"]
-        select = self.variables[FILTER].index.values
-        dataModel[select] = dataModel[select].diff(periods=3, axis=0)
-
-
-        ## -- Code: 3 Annualised Quarter on Quarter Growth rate -- ##
-        FILTER = (self.variables["transformationCode"] == 3) & self.variables["includeModel"]
-        select = self.variables[FILTER].index.values
-        dataModel[select] = 400 * np.log(dataModel[select]).diff(periods=3, axis=0)
-
-        ## -- The Presentation of the Data -- ##
-        FILTER = (self.variables["transformationCode"] == 3) & self.variables["includeModel"]
-        select = self.variables[FILTER].index.values
-        dataPresent[select] = 400 * np.log(dataPresent[select]).diff(periods=3, axis=0)
-
-        ## -- Code: 4 3-month growth rate of 12-month difference of log variable -- ##
-        FILTER = (self.variables["transformationCode"] == 4) & self.variables["includeModel"]
-        select = self.variables[FILTER].index.values
-        dataModel[select] = 100 * (np.log(dataModel[select]).diff(periods=12, axis=0)).diff(periods=3, axis=0)
-
-        ## -- The Presentation of the Data -- ##
-        FILTER = (self.variables["transformationCode"] == 4) & self.variables["includeModel"]
-        select = self.variables[FILTER].index.values
-        dataPresent[select] = 100 * (np.log(dataPresent[select]).diff(periods=12, axis=0)).diff(periods=3, axis=0)
-
-        return dataModel, dataPresent
-
-
 if __name__ == "__main__":
-    print("\ngetData Main File")
-    timestr = time.strftime("%Y%m%d")
-    log_filename = '/Nowcast/logs/MS_Investigate_logfile_' + socket.gethostname() + '_' + timestr + '.log'
-    FORMAT = '%(asctime)-15s %(funcName)s %(lineno)d %(message)s'
-    logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
+    print("main file")
+    try:
+        data = getData(dev=True)
+        dataModel, dataPresent, options= data.getModelData()
+        print(dataModel)
+    except Exception as e:
+        logging.info("Error in init: %s", e)
+        raise
 
-    os.chdir("/Nowcast/")
-    data = getData()
     #data.getModelData()
     #data.forecastGDP()

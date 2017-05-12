@@ -4,7 +4,7 @@ from datetime import datetime
 import socket
 
 if __name__ == "__main__":
-    log_filename = 'C:\\Nowcast\\logs\\{1:%Y-%m-%d}_MSP_nowcast_logfile_{0:s}.log'.format(socket.gethostname(), datetime.now())
+    log_filename = '/repos/Nowcast/logs\\{1:%Y-%m-%d}_MSP_nowcast_logfile_{0:s}.log'.format(socket.gethostname(), datetime.now())
     FORMAT = '%(asctime)-15s %(funcName)s %(lineno)d %(message)s'
     logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
 
@@ -14,56 +14,53 @@ import sys
 import os
 import configparser
 
+## 00 Own Modules
 from getData import getData
 from dynFAMissing import dynFAMissing
 from dfForecast import dfForecast
 from insertResultsMySQL import insertResultsMySQL
-from outputResults import outputResults
-from investigateData import investigateData
 from backtesting import backtesting
 
 ## -- Main script for the Dynamic Factor Now-Casting Model -- ##
 class nowcastModel(object):
-    def __init__(self, configPath = "/nowcast/config/", runModel=False):
+    def __init__(self, configPath:str = "/repos/Nowcast/config/", runModel:bool=False, dev:bool=False):
         self.configPath = configPath
+        self.dev = dev
         self.getConfig()
-
-        ## -- run the model -- ##
-        if runModel:
-            self.runModel()
+        self.getData = getData(configPath =self.configPath, dev=dev)
 
     def getConfig(self):
         ## -- General Configurations -- ##
-        self.config = configparser.ConfigParser()
-        self.config.read(self.configPath + 'configNowcasting.ini')
-        logging.info(self.config.sections())
+        config = configparser.ConfigParser()
+        config.read(self.configPath + 'configNowcasting.ini')
 
-    def getData(self):
+        ## -- MODELS -- ##
+        self.modelID = {}
+        for key in config["MODELS"]:
+            self.modelID[key] = config["MODELS"].getint(key)
+
+    def runModel(self, model:str="benchmark", saveResults:bool=True):
         ## -- 1) Get the data -- ##
         logging.info("\nStep (1) Retrieve the data from the MySQL MacroSynergy db")
-        self.data = getData(configPath =self.configPath)
-
-    def runModel(self):
-        ## -- get the data -- ##
-        self.getData()
-
+        dataModel, dataPresent, options = self.getData.getModelData(modelID = self.modelID[model])
+        
         ## -- 2) Estimate the Dynamic Factor Model -- ##
         logging.info("\nStep (2) Estimate the model")
-        self.dfModel = dynFAMissing(Yvar=self.data.dataModel, options=self.data.options)
+        self.dfModel = dynFAMissing(Yvar=dataModel, options=options)
 
         ## -- Forecast and Nowcast the variables -- ##
         logging.info("\nForecast the series")
-        self.forecast = dfForecast(model=self.dfModel, options=self.data.options)
+        self.forecast = dfForecast(model=self.dfModel, options=options)
 
         ## -- Generate the Output -- ##
         logging.info("\nGenerate the Output")
 
         ## -- Save the Results -- ##
-        if self.config["model1"].getboolean("saveresultstodb"):
-            print("\nSave Results")
+        if saveResults:
+            logging.info("Save Results")
             self.saveResultsToDb()
 
-    def backTestModel(self, start = datetime.date(datetime(2000, 1, 1))):
+    def backTestModel(self, start:datetime.date = datetime.date(datetime(2000, 1, 1))):
         logging.info("\nBack test the model")
         backTest = backtesting( start = start )
         backTest.runBacktest(data = self.data.dataModel, options=self.data.options)
@@ -87,37 +84,16 @@ if __name__ == "__main__":
     print("\n\n=============\nNowCasting Model\n=============\n")
     if (os.getlogin() == "pnash"):
         os.chdir("Z:\\PNash\\My Documents\\Projects\\Nowcast\\")
-    elif False:
-        os.chdir("C:\\Nowcast\\")
     else:
-        os.chdir("C:\\Nowcast\\")
+        os.chdir("/repos/Nowcast/")
 
     print("\nCurrent Work Directory: ", os.getcwd())
-    model = nowcastModel(runModel=False)
-    model.backTestModel()
-
-    ## -- Investigate the data -- ##
-    if False:
-        investigateData(model.data)
+    model = nowcastModel(dev=True)
 
     if False:
-        model.plotResults()
+        model.backTestModel()
 
-    if False:
-        ## -- Save data -- ##
-        Ycommonf = model.forecast.Ycommonf["usnaac0169"]
-        Ycommonf.rename(columns={"usnaac0169":"common"}, inplace=True)
-
-        Yidiosyncraticf = model.forecast.Yidiosyncraticf["usnaac0169"]
-        Yidiosyncraticf.rename(columns={"usnaac0169": "diosyncratic"}, inplace=True)
-
-        Yf = model.forecast.Yf["usnaac0169"]
-        Yf.rename(columns={"usnaac0169": "Yf"}, inplace=True)
-
-        Ygdp = pd.concat((Yf, Ycommonf, Yidiosyncraticf), axis=1)
-        Ygdp.rename(columns={0: "Yf", 1: "Common Component", 2: "Idiosyncratic Component"}, inplace=True)
-        print(Ygdp)
-        Ygdp.to_csv("tmp/GDP_forecast.csv")
-
+    if True:
+        model.runModel()
 
     print("\n\nThat is all for now folks\n")

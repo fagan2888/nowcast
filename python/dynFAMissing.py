@@ -22,9 +22,9 @@ class dynFAMissing(object):
         self.qlag = np.int64(self.options["qlag"])
         self.plag = np.int64(self.options["plag"])
         self.Nx = np.int64(self.options["Nx"])
-        self.max_iter = np.int64(self.options["max_iter"])
-        self.nyQ = np.int64(self.options["nyQ"])
-        self.nyM = np.int64(self.options["nyM"])
+        #self.max_iter = np.int64(self.options["max_iter"])
+        self.NyQ = np.int64(self.options["NyQ"])
+        self.NyM = np.int64(self.options["NyM"])
 
         ## - -Pick the minimum lags -- ##
         self.pp = max(5, self.plag, self.qlag)
@@ -41,13 +41,15 @@ class dynFAMissing(object):
 
     def balancedPanelPCA(self):
         ## -- Balanced Panel: PCA -- ##
-        FILTER = self.Yvar.ix[:, :-self.nyQ].apply(lambda x: all(np.isfinite(x)), axis=1)
-        Yhat = self.Yvar[FILTER].ix[:, :-self.nyQ]
+        selectM = self.Yvar.columns[:-self.NyQ]
+        selectQ = self.Yvar.columns[-self.NyQ:]
 
+        FILTER = self.Yvar.ix[:, selectM].apply(lambda x: all(np.isfinite(x)), axis=1)
+        Yhat = self.Yvar.ix[FILTER, selectM]
 
         pca = self.stats.PCAfn(X=Yhat)
 
-        fhat =  pca.scores[:,0:self.Nx]
+        fhat =  pca.scores[:, 0:self.Nx]
 
         colNames = ["Factor {0:d}".format(ii) for ii in range(1,self.Nx+1)]
         self.fPCA = pd.DataFrame(columns=colNames, data=fhat, index=self.Yvar[FILTER].index)
@@ -60,11 +62,12 @@ class dynFAMissing(object):
         ################
         ## -- Step (1.2) Measurement Equation -- ##
         ## Estimate Monthly Parameters
-        Ny = self.nyM + self.nyQ
+        Ny = self.NyM + self.NyQ
         Ymean = np.zeros(shape=(1, Ny))*np.nan
-        for ii in range(0,Ny):
-            FILTER = np.isfinite(self.Yvar.ix[:,ii])
-            Ymean[:, ii] = np.mean(self.Yvar.ix[FILTER, ii])
+        select = self.Yvar.columns
+        for num, col in enumerate(self.Yvar.columns):
+            FILTER = np.isfinite(self.Yvar.ix[:, col])
+            Ymean[:, num] = np.mean(self.Yvar.ix[FILTER, col])
 
         ## -- Demean the data -- ##
         self.Ymean = Ymean
@@ -73,25 +76,24 @@ class dynFAMissing(object):
 
         ## -- Monthly Data: Measurement Equation -- ##
         logging.info("\nOLS Estimate of Monthly parameters")
-        llambdaM = np.dot(np.linalg.pinv(fhat), Yc.ix[self.filterBalance, :-self.nyQ]).T
+        llambdaM = np.dot(np.linalg.pinv(fhat), Yc.ix[self.filterBalance, selectM]).T
         if (np.sum(np.isnan(llambdaM)) > 0):
-            logging.error(llambdaM)
-            logging.error("\nError! llambdaM has NaN values")
-            raise ValueError
+            msg = "Error! llambdaM has NaN values"
+            msg += "\n{0}".format(logging.error(llambdaM))
+            raise ValueError(msg)
 
-        residualMonthly = Yc.ix[self.filterBalance, :-self.nyQ] - np.dot(fhat, llambdaM.T)
+        residualMonthly = Yc.ix[self.filterBalance, selectM] - np.dot(fhat, llambdaM.T)
+        tthetaM = np.zeros(shape=(self.NyM, self.NyM * self.qlag))
 
-        tthetaM = np.zeros(shape=(self.nyM, self.nyM * self.qlag))
-
-        for ii in range(0, self.nyM):
-            yy = np.expand_dims(residualMonthly.ix[self.qlag:, ii], axis=1)
-            xx = np.expand_dims(residualMonthly.ix[self.qlag-1:-1, ii],axis=1)
+        for num, col in enumerate(residualMonthly.columns):
+            yy = np.expand_dims(residualMonthly.ix[self.qlag:, col], axis=1)
+            xx = np.expand_dims(residualMonthly.ix[self.qlag-1:-1, col],axis=1)
             for jj in range(2, self.qlag):
-                xx = np.hstack((xx, np.expand_dims(residualMonthly.ix[self.qlag-jj:-jj, ii],axis=1)))
+                xx = np.hstack((xx, np.expand_dims(residualMonthly.ix[self.qlag-jj:-jj, col],axis=1)))
 
             bb = np.dot(np.linalg.pinv(xx), yy)
-            select = np.arange(start=ii, step=self.nyM, stop=(self.nyM * self.qlag))
-            tthetaM[ii, select] = bb.T
+            select = np.arange(start=num, step=self.NyM, stop=(self.NyM * self.qlag))
+            tthetaM[num, select] = bb.T
 
         ## -- Quarterly Data: Measurement Equation -- ##
         logging.info("\nOLS Estimate of Quarterly parameters")
@@ -102,13 +104,13 @@ class dynFAMissing(object):
             IQuarterlyFactors = np.kron(Iq , np.eye(self.Nx))
 
         if (self.qq-5 >0):
-            IQuarterlyResidual = np.kron(np.concatenate((Iq, np.zeros(shape=(1, self.qq-5))), axis=1), np.eye(self.nyQ))
+            IQuarterlyResidual = np.kron(np.concatenate((Iq, np.zeros(shape=(1, self.qq-5))), axis=1), np.eye(self.NyQ))
         else:
-            IQuarterlyResidual = np.kron(Iq, np.eye(self.nyQ))
+            IQuarterlyResidual = np.kron(Iq, np.eye(self.NyQ))
 
         # TStart ??
         # TEnd ??
-        Yq = Yc.ix[:, -self.nyQ:]
+        Yq = Yc.ix[:, selectQ]
 
         T, N  = Yq.shape
         FILTER = Yq.ix[:, :].apply(lambda x: all(np.isfinite(x)), axis=1) #np.isfinite(Yq.ix[:,0:])
@@ -121,16 +123,27 @@ class dynFAMissing(object):
 
         fGDP = fhat[rangeSelect[filterQuarter]]
         for tt in range(1, self.pp):
+            print(fhat[rangeSelect[filterQuarter] - tt])
+            print(rangeSelect[filterQuarter])
+            print(tt)
             fGDP = np.concatenate((fGDP, fhat[rangeSelect[filterQuarter] - tt]), axis=1)
+        sys.exit(0)
 
         ## Parameters for Quarterly Data Loadings
+        print("fGDP", fGDP.shape)
+        print("Iq", IQuarterlyFactors.T.shape)
+        print("(fGDP*Iq)^-1", np.linalg.pinv(np.dot(fGDP, IQuarterlyFactors.T)).shape)
+        print("Yq", Yq.shape)
+        print("Yq", Yq[self.filterBalance].shape)
+        print("Yq", Yq[self.filterBalance][filterQuarter].shape)
+        sys.exit(0)
         llambdaQ = np.dot(np.linalg.pinv(np.dot(fGDP, IQuarterlyFactors.T)), Yq[self.filterBalance][filterQuarter]).T
         if (np.sum(np.isnan(llambdaQ)) > 0):
-            print("\nError! llambdaQ has NaN values")
-            raise ValueError
+            msg = "Error! llambdaQ has NaN values"
+            raise ValueError(msg)
 
         ## Initial Guess of idiosyncratic component: Arbitrary
-        tthetaQ = np.kron(np.ones(shape=(1,self.qlag)), np.eye(self.nyQ)) * 0.6
+        tthetaQ = np.kron(np.ones(shape=(1,self.qlag)), np.eye(self.NyQ)) * 0.6
 
         ## -- The State Transition Equation -- ##
         logging.info("\nFactor transition equation")
@@ -140,7 +153,7 @@ class dynFAMissing(object):
         for ii in range(1, self.pp):
             Fstate = np.concatenate((Fstate, fhat[self.pp-ii:-ii, :]), axis=1)
 
-        Fstate = np.concatenate((Fstate, np.zeros(shape=(Fstate.shape[0], self.nyQ*5))), axis=1)
+        Fstate = np.concatenate((Fstate, np.zeros(shape=(Fstate.shape[0], self.NyQ*5))), axis=1)
 
         ## -- The Variance-Covariance Matrix of the states -- ##
         ## -- Innovation Common Component -- ##
@@ -148,7 +161,7 @@ class dynFAMissing(object):
 
         ## -- Variance-Covariance Idiosyncratic Component -- ##
         HMonthly = np.diag( np.diag( np.cov( residualMonthly, rowvar=0) ) )
-        HQuarterly = np.eye(self.nyQ)*1e-3
+        HQuarterly = np.eye(self.NyQ)*1e-3
 
         ## Store the parameters
         parameters = {
@@ -170,7 +183,7 @@ class dynFAMissing(object):
         tt=0
         Tmax = Ytilde.shape[1]
         while True:
-            if any(np.isfinite(Ytilde[:self.nyM,tt])):
+            if any(np.isfinite(Ytilde[:self.NyM,tt])):
                 TStart = tt
                 break
             else:
@@ -226,11 +239,11 @@ class dynFAMissing(object):
 
         ## -- Individual Components -- ##
         ## Common Component
-        Ycommon = np.concatenate((np.dot(llambdaM, Xhat[0:self.Nx ,:]), np.dot(C[-self.nyQ:, 0:self.Nx*self.pp], Xhat[0:self.Nx*self.pp ,:])), axis=0)
+        Ycommon = np.concatenate((np.dot(llambdaM, Xhat[0:self.Nx ,:]), np.dot(C[-self.NyQ:, 0:self.Nx*self.pp], Xhat[0:self.Nx*self.pp ,:])), axis=0)
         self.Ycommon = pd.DataFrame(data=Ycommon.T, columns=list(Yc), index=indexVal[TStart:])
         ## Idiosyncratic Component
         Yidiosyncratic = Yc.ix[TStart+self.qlag:, :].values.T - Ycommon
-        Yidiosyncratic[-self.nyQ:, :] = np.dot(C[-self.nyQ:, -self.nyQ*self.qq:], Xhat[-self.nyQ*self.qq:, :])
+        Yidiosyncratic[-self.NyQ:, :] = np.dot(C[-self.NyQ:, -self.NyQ*self.qq:], Xhat[-self.NyQ*self.qq:, :])
         self.Yidiosyncratic = pd.DataFrame(data=Yidiosyncratic.T, columns=list(Yc), index=indexVal[TStart:])
 
         self.Yhat = pd.DataFrame(data=Yhat.T, columns=list(Yc), index=indexVal[TStart:])

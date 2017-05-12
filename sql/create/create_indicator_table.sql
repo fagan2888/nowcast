@@ -52,18 +52,18 @@ ON duplicate key update indicator_id = indicator_id, vendor_key = vendor_key;
 
 
 INSERT INTO indicators (provider_id, vendor_key, frequency_id, country_id, indicator_short_info, indicator_info, indicator_type, indicator_presentation) VALUES
-	(1, 'usfcst0074',  7, 184,'Anxious Index','Anxious Index', 6, 5),
-	(1, 'usfcst1745',  7, 184, 'Median Real GDP Growth rates','Real GDP Philidelphia Fed Survey of Professional Forecasters (median)', 6, 5),
-	(1, 'usfcst1810',  7, 184, 'Mean Real GDP Growth Rates', 'Real GDP Philidelphia Fed Survey of Professional Forecasters (mean)', 6, 5),
-	(1, 'usfcst2473',  7, 184, 'Atlanta Fed GDPnow 2017-Q2', 'Atlanta Fed GDPnow 2017-Q2 Mean Real GDP Growth rates (SAAR)', 6, 5),
-	(1, 'usfcst1847',  7, 184, 'Atlanta Fed GDPnow 2017-Q1', 'Atlanta Fed GDPnow 2017-Q1 Mean Real GDP Growth rates (SAAR)', 6, 5),
-	(1, 'usfcst1884',  7, 184, 'Atlanta Fed GDPnow 2016-Q4', 'Atlanta Fed GDPnow 2016-Q4 Mean Real GDP Growth rates (SAAR)', 6, 5),
-	(1, 'usfcst1841',  7, 184, 'Atlanta Fed GDPnow 2016-Q3', 'Atlanta Fed GDPnow 2016-Q3 Mean Real GDP Growth rates (SAAR)', 6, 5),
-	(1, 'usfcst1469',  7, 184, 'Atlanta Fed GDPnow 2016-Q2', 'Atlanta Fed GDPnow 2016-Q2 Mean Real GDP Growth rates (SAAR)', 6, 5),
-	(1, 'usfcst0819',  7, 184, 'Atlanta Fed GDPnow 2016-Q1', 'Atlanta Fed GDPnow 2016-Q1 Mean Real GDP Growth rates (SAAR)', 6, 5),
-	(1, 'usfcst0803',  7, 184, 'Atlanta Fed GDPnow 2015-Q4', 'Atlanta Fed GDPnow 2015-Q4 Mean Real GDP Growth rates (SAAR)', 6, 5),
-    (1, 'usfcst0139', 7, 184, 'NY Fed GDP Nowcast Q2-2017', 'NY Fed GDP Nowcast Q2-2017', 6, 5),
-	(1, 'usfcst1969', 7, 184, 'NY Fed GDP Nowcast Q1-2017', 'NY Fed GDP Nowcast Q1-2017', 6, 5)
+	(1, 'usfcst0074',  3, 184,'Anxious Index','Anxious Index', 6, 5),
+	(1, 'usfcst1745',  3, 184, 'Median Real GDP Growth rates','Real GDP Philidelphia Fed Survey of Professional Forecasters (median)', 6, 5),
+	(1, 'usfcst1810',  3, 184, 'Mean Real GDP Growth Rates', 'Real GDP Philidelphia Fed Survey of Professional Forecasters (mean)', 6, 5),
+	(1, 'usfcst2473',  3, 184, 'Atlanta Fed GDPnow 2017-Q2', 'Atlanta Fed GDPnow 2017-Q2 Mean Real GDP Growth rates (SAAR)', 6, 5),
+	(1, 'usfcst1847',  3, 184, 'Atlanta Fed GDPnow 2017-Q1', 'Atlanta Fed GDPnow 2017-Q1 Mean Real GDP Growth rates (SAAR)', 6, 5),
+	(1, 'usfcst1884',  3, 184, 'Atlanta Fed GDPnow 2016-Q4', 'Atlanta Fed GDPnow 2016-Q4 Mean Real GDP Growth rates (SAAR)', 6, 5),
+	(1, 'usfcst1841',  3, 184, 'Atlanta Fed GDPnow 2016-Q3', 'Atlanta Fed GDPnow 2016-Q3 Mean Real GDP Growth rates (SAAR)', 6, 5),
+	(1, 'usfcst1469',  3, 184, 'Atlanta Fed GDPnow 2016-Q2', 'Atlanta Fed GDPnow 2016-Q2 Mean Real GDP Growth rates (SAAR)', 6, 5),
+	(1, 'usfcst0819',  3, 184, 'Atlanta Fed GDPnow 2016-Q1', 'Atlanta Fed GDPnow 2016-Q1 Mean Real GDP Growth rates (SAAR)', 6, 5),
+	(1, 'usfcst0803',  3, 184, 'Atlanta Fed GDPnow 2015-Q4', 'Atlanta Fed GDPnow 2015-Q4 Mean Real GDP Growth rates (SAAR)', 6, 5),
+    (1, 'usfcst0139', 3, 184, 'NY Fed GDP Nowcast Q2-2017', 'NY Fed GDP Nowcast Q2-2017', 6, 5),
+	(1, 'usfcst1969', 3, 184, 'NY Fed GDP Nowcast Q1-2017', 'NY Fed GDP Nowcast Q1-2017', 6, 5)
 ON duplicate key update indicator_id = indicator_id, vendor_key = vendor_key;
 
 INSERT INTO indicators (provider_id, vendor_key, frequency_id, country_id, indicator_info, indicator_short_info, indicator_type, indicator_presentation) VALUES

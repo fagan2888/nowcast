@@ -113,7 +113,8 @@ class benchmark(object):
 
             filterTT = filterVar & (fcst["forecast_period"] == tt)
             FILTER = filterTT & (fcst["provider"] == "BLP_mean")
-            ax.plot(fcst.ix[FILTER, "release_date"], fcst.ix[FILTER, "value"], label="Bloomberg Mean Forecast", lw=3, c='g', zorder=10)
+            ax.plot(fcst.ix[FILTER, "release_date"], fcst.ix[FILTER, "value"], label="Bloomberg Mean Forecast", lw=1, c='g', zorder=10)
+
             ax.plot(nowcastPlot[tt].index, nowcastPlot[tt], label="MSP Nowcast Model", lw=3, c='r', zorder=20)
 
             data = fcst[filterTT & (fcst["provider"] != "BLP_mean")].pivot(index="release_date", columns="provider", values="value")
@@ -135,7 +136,7 @@ class benchmark(object):
                     data.index, data.quantile(q=qq/200, axis=1), data.quantile(q=1-qq/200, axis=1),
                     alpha=aalpha, facecolor='b', edgecolor=None, zorder=1, label="Bloomberg ${0}\%$".format(100-qq)
                     )
-
+            FILTER = filterTT & (fcst["provider"] != "BLP_mean")
             ax.plot([xMin, xMax], [0,0], c='k', lw=0.5, zorder=5)
 
             ax.set_ylim(ymin=yMin, ymax=yMax)

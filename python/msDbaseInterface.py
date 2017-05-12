@@ -9,24 +9,25 @@ from math import log
 import sys
 
 ## Own Modules
-import msLogConfig
+if __name__ == "__main__":
+    import msLogConfig
 
 class msDbInterface(object):
     def __init__(self, user, password, host, db_name):
-            self.user = user
-            self.password = password
-            self.db_name = db_name
-            self.host = host
-            self.cnx = mysql.connector.connect(user = self.user, password = self.password, host = self.host , database = self.db_name)
-            self.cnx.autocommit = True
-            logging.info('Opening connection to database: ' + self.db_name + ' on server ' + self.host)
-            self.cursor = self.cnx.cursor(buffered = True);
+        self.user = user
+        self.password = password
+        self.db_name = db_name
+        self.host = host
+        self.cnx = mysql.connector.connect(user = self.user, password = self.password, host = self.host , database = self.db_name)
+        self.cnx.autocommit = True
+        logging.info('Opening connection to database: ' + self.db_name + ' on server ' + self.host)
+        self.cursor = self.cnx.cursor(buffered = True);
 
     def connect(self):
         try:
             if not self.cnx.is_connected():
                 self.cnx = mysql.connector.connect(user = self.user, password = self.password, host = self.host , database = self.db_name)
-                logging.info('Connection not opened on init. Opening connection to database: ' + self.db_name + 'on server' + self.host)
+                logging.info('Connection not opened on init. Opening connection to database: {0} on server {1}'.format(self.db_name, self.host))
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
                 logging.error(err)

@@ -33,7 +33,7 @@ class msServiceMBDb(win32serviceutil.ServiceFramework):
         self.tz = timezone("Europe/London")
         try:
             self.config = configparser.ConfigParser()
-            self.config.read('/Nowcast/config/configNowcasting.ini')
+            self.config.read('/repos/Nowcast/config/configNowcasting.ini')
         except Exception as e:
             servicemanager.LogErrorMsg(traceback.format_exc())
             logging.info("Error in init: %s", e)

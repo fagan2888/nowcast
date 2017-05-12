@@ -18,6 +18,9 @@ import configparser
 import sqlalchemy
 import argparse
 import calendar
+from email.message import EmailMessage
+from email.headerregistry import Address
+import smtplib
 ## Alternative to sqlalchemy
 #import mysql.connector
 
@@ -33,6 +36,26 @@ class blpForecasts(object):
         ## Move into individual files
         self.engine = sqlalchemy.create_engine('mysql+mysqlconnector://{0}:{1}@{2}/{3}'.format(self.user, self.password, self.host, self.db_name))
 
+    def testEmail(self):
+        message  = "Test email list error@macrosynergy.com"
+        self.sendErrorMail(message=message)
+
+    def sendErrorMail(self, message):
+        server = smtplib.SMTP(self.config['EMAIL']['email_server'])
+        server.starttls()
+        sender = self.config['EMAIL']['email_sender']
+        receiver = self.config['EMAIL']['email_error_recv']
+        msg = EmailMessage()
+        msg['Subject'] = "KloFlow Update: Bloomberg Macro Forecasts data"
+        msg['From'] = sender
+        msg['To'] = receiver
+
+        txt  = "<p> There has been an exception raised in the Forecasts Bloomberg data service. Please investigate</p>"
+        txt += '<p>' +  message + '</p>'
+        msg.add_alternative(txt, subtype='html')
+
+        server.send_message(msg)
+        server.quit()
 
     def getConfig(self, path = "/repos/Nowcast/"):
         pathfile = path + 'config/configNowcasting.ini'
@@ -68,6 +91,7 @@ if __name__ == "__main__":
     try:
         forecasts = blpForecasts(dev=True)
         forecasts.getForecastTickers()
+        forecasts.testEmail()
     except:
         msg = "Error in running the ETF program"
         logging.error(msg, exc_info=True)
