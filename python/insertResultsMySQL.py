@@ -44,7 +44,7 @@ class insertResultsMySQL (msDbInterface):
         msg = "SaveResults to\nUser: {0}, DB Name: {1}, Host: {2}".format(self.user, self.db_name, self.host)
         logging.info(msg)
 
-    def uploadResults(self, forecast):
+    def uploadResults(self, forecast, informationSet=None):
         ## -- Results: Mean Forecast -- ##
         Yf = forecast.Yf.unstack().reset_index()
         Yf.rename(columns={"level_0": "indicator_id", "level_1": "period_date", 0: "mean_forecast"}, inplace=True)
@@ -85,9 +85,7 @@ class insertResultsMySQL (msDbInterface):
         self.cursor.execute(query)
         self.cnx.commit()
 
-        query = """
-            SELECT max(run_id) FROM run_table;
-            """
+        query = """SELECT max(run_id) FROM run_table;"""
         self.cursor.execute(query)
         run_id = self.cursor.fetchall()[0][0]
         # Link run_id to model_id...
@@ -99,7 +97,10 @@ class insertResultsMySQL (msDbInterface):
                 revision = int(line.strip("\n").split(":")[1])
 
         ## OBS NEEDS MODEL ID
-        query = "INSERT INTO run_info (run_id, model_id, svn_repository, svn_revision) VALUES ({0}, {1}, '{2}', {3})".format(run_id, self.modelID, repository, revision)
+        if informationSet:
+            query = "INSERT INTO run_info (run_id, model_id, information_set, svn_repository, svn_revision) VALUES ({0}, {1}, '{2}', '{3}', {4})".format(run_id, self.modelID, informationSet, repository, revision)
+        else:
+            query = "INSERT INTO run_info (run_id, model_id, svn_repository, svn_revision) VALUES ({0}, {1}, '{2}', {3})".format(run_id, self.modelID, repository, revision)
         self.cursor.execute(query)
         self.cnx.commit()
 

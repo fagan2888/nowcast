@@ -55,10 +55,14 @@ class nowcastModel(object):
         if saveResults:
             logging.info("Step (4) Save Results to MySQL")
             ## OBS ADD Model ID
-            self.saveResultsToDb(modelID = self.modelID[model])
+            self.saveMySQL = insertResultsMySQL(forecast=self.forecast, configPath = self.configPath, dev=self.dev, modelID=self.modelID[model])
         logging.info("Step (5) All done for now")
 
     def backTestModel(self, start:datetime.date = datetime.date(datetime(2000, 1, 1))):
+        ## GET RELEASE DATES TO constrain information set from...
+        query = "SELECT DISTINCT release_date FROM data WHERE release_date >= '{0:%Y-%m-%d}'".format(start)
+
+        ## for dd in release_dates...
         backTest = backtesting( start = start )
         backTest.runBacktest(data = self.data.dataModel, options=self.data.options)
         ## PASS the history of updates / loop through datasets...
@@ -68,9 +72,6 @@ class nowcastModel(object):
         ## -- Flush all saved forecasts and re-run them all -- ##
         pass
 
-    def saveResultsToDb(self, modelID:int):
-            logging.info("Save the results to the MySQL database")
-            self.saveMySQL = insertResultsMySQL(forecast=self.forecast, configPath = self.configPath, dev=self.dev, modelID=modelID)
 
     def plotResults(self):
         self.output = outputResults()

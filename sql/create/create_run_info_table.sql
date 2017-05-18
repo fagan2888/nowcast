@@ -3,6 +3,7 @@
 CREATE TABLE IF NOT EXISTS run_info(
 	run_id 			INTEGER NOT NULL,
 	model_id 		INTEGER NOT NULL,
+	information_set TIMESTAMP,
 	svn_repository 	VARCHAR(80),
 	svn_revision	INTEGER,
 	CONSTRAINT run_info_ibfk_1 FOREIGN KEY (run_id)

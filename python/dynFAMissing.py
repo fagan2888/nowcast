@@ -140,7 +140,7 @@ class dynFAMissing(object):
 
         ## Initial Guess of idiosyncratic component: Arbitrary
         ## Kill persistance...
-        tthetaQ = np.kron(np.ones(shape=(1,self.qlag)), np.eye(self.NyQ)) *0 #* 0.6
+        tthetaQ = np.kron(np.ones(shape=(1,self.qlag)), np.eye(self.NyQ)) *0 # OR ZERO
         parameters["tthetaQ"] = tthetaQ
 
         ## -- The State Transition Equation -- ##
