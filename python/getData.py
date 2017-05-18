@@ -72,9 +72,12 @@ class getData(msDbInterface):
         response = engine.execute(query)
         options = {}
         for row in response:
-            options[row[0]] = row[1]
-        options["NyQ"] = np.sum(meta["frequency_id"] == 10)
-        options["NyM"] = np.sum(meta["frequency_id"] == 7)
+            if (row["variable_name"] == "high") | (row["variable_name"] == "low"):
+                options[row["variable_name"]] = row["control_values"]
+            else:
+                options[row["variable_name"]] = int(row["control_values"])
+        options["NyQ"] = np.int64(np.sum(meta["frequency_id"] == 10))
+        options["NyM"] = np.int64(np.sum(meta["frequency_id"] == 7))
 
         ## -- Get the data -- ##
         query  = """SELECT\n\t t1.indicator_id, t1.period_date, t1.value"""

@@ -36,24 +36,24 @@ class dfForecast(object):
 
     def __init__(self, model, options):
         self.stateSpaceSystem = stateSpaceSystem()
-        nyQ = options["nyQ"]
+        NyQ = options["NyQ"]
         self.options = options
         self.model   = model
 
         ## -- Start date of Forecast -- ##
-        FILTER = self.model.Yc.ix[:, -nyQ:].apply(lambda x: np.isfinite(x), axis=1).values
+        FILTER = self.model.Yc.ix[:, -NyQ:].apply(lambda x: all(np.isfinite(x)), axis=1).values
         self.Tmax = self.model.Yc[FILTER].index.max()
         self.Tnow = self.model.Yc.index.max()
         self.hor = self.options["hor"]
 
         ## -- Run the forecast -- ##
-        logging.info("\nForecast the dynamic factor model")
+        logging.debug("Forecast the dynamic factor model")
         self.forecastDFM()
 
     def forecastDFM(self):
         ## -- Options -- ##
-        nyQ =self.options["nyQ"]
-        nyM =self.options["nyM"]
+        NyQ =self.options["NyQ"]
+        NyM =self.options["NyM"]
         Nx = self.options["Nx"]
         plag = self.options["plag"]
         pp = max(5, plag)
@@ -101,8 +101,8 @@ class dfForecast(object):
                     Ytilde = np.dot(C, Xf[:, -1:])
 
         ## -- Lagged Values -- ##
-        FILTER = self.model.Yc.ix[:, 0:nyM].apply(lambda x: all(np.isfinite(x)), axis=1).values
-        Ylag = self.stateSpaceSystem.revertMonthlyLags(Y=Yobs.values.T, tthetaM=tthetaM, qlag=qlag, nyM=nyM)
+        FILTER = self.model.Yc.ix[:, 0:NyM].apply(lambda x: all(np.isfinite(x)), axis=1).values
+        Ylag = self.stateSpaceSystem.revertMonthlyLags(Y=Yobs.values.T, tthetaM=tthetaM, qlag=qlag, NyM=NyM)
 
         dateLags = add_month(dateIn=self.model.Yc[FILTER].index.max())
         diffLags = (self.Tnow.year - dateLags.year)*12 + self.Tnow.month - dateLags.month
@@ -126,16 +126,16 @@ class dfForecast(object):
         ## -- Insert the Forecasts, Nowcasts, and Backcasts -- ##
         for tt in Yf[Yf.index > Tall].index:
             num = Yf[Yf.index <= tt].shape[0]
-            logging.info("tt: {0}, Tlag: {1}, num: {2:d}".format(tt, Tlag, num))
+            logging.debug("tt: {0}, Tlag: {1}, num: {2:d}".format(tt, Tlag, num))
             if (Tlag > TyMax):
-                Yobs.loc[Tlag] = Yf.ix[Tlag, :] # np.nan* np.ones(shape=(1,nyM+nyQ))
-            elif any(np.isnan(Yobs.ix[Tlag, 0:nyM])):
-                FILTER = np.isnan(Yobs.ix[Tlag, 0:nyM])
+                Yobs.loc[Tlag] = Yf.ix[Tlag, :] # np.nan* np.ones(shape=(1,NyM+NyQ))
+            elif any(np.isnan(Yobs.ix[Tlag, 0:NyM])):
+                FILTER = np.isnan(Yobs.ix[Tlag, 0:NyM])
                 select = [x for x in FILTER[FILTER].index]
                 Yobs.ix[Tlag, select] = Yf.ix[Tlag, select]
 
             FILTER = (Yobs.index < tt)
-            Ylag = self.stateSpaceSystem.revertMonthlyLags(Y=Yobs[FILTER].values.T, tthetaM=tthetaM, qlag=qlag, nyM=nyM)
+            Ylag = self.stateSpaceSystem.revertMonthlyLags(Y=Yobs[FILTER].values.T, tthetaM=tthetaM, qlag=qlag, NyM=NyM)
             yf = self.model.Ymean.T + Ylag[:, -1:] + Ytilde[:, num-1:num]
             Yf.ix[tt, :] = yf.T
             if np.sum(np.isnan(Yf.ix[tt, ::].values)) > 0:
@@ -143,20 +143,20 @@ class dfForecast(object):
             Tlag = tt
 
         if np.sum(np.isnan(Yf.values)) > 0:
-            logging.error("Yf contains NaN values")
-            raise ValueError
+            msg = "Yf contains NaN values"
+            raise ValueError(msg)
 
         ## -- Individual Components -- ##
         ## Common Component
         llambdaM = self.model.parameters["llambdaM"]
-        Ycommonf = np.concatenate((np.dot(llambdaM, Xf[0:Nx ,:]), np.dot(C[-nyQ:, 0:Nx*pp], Xf[0:Nx*pp ,:])), axis=0)
+        Ycommonf = np.concatenate((np.dot(llambdaM, Xf[0:Nx ,:]), np.dot(C[-NyQ:, 0:Nx*pp], Xf[0:Nx*pp ,:])), axis=0)
 
         ## Mean
         Ymean = np.dot(self.model.Ymean.T, np.ones(shape=(1, Xf.shape[1])))
 
         ## Idiosyncratic Component
         Yidiosyncraticf = Yf.values.T  - Ymean - Ycommonf
-        Yidiosyncraticf[-nyQ:, :] = np.dot(C[-nyQ:, -nyQ*qq:], Xf[-nyQ*qq:, :])
+        Yidiosyncraticf[-NyQ:, :] = np.dot(C[-NyQ:, -NyQ*qq:], Xf[-NyQ*qq:, :])
 
         ## -- Save to DataFrame -- ##
         self.Ymeanf = Ymean

@@ -34,23 +34,24 @@ class dynFAMissing(object):
         self.Ty = self.Yvar.shape[0]
 
         if True:
-            logging.info("\nBalanced Panel PCA and OLS: two stage estimation")
+            logging.debug("\nBalanced Panel PCA and OLS: two stage estimation")
             self.balancedPanelPCA()
         else:
-            logging.info("\nGibbs Sampling")
+            logging.debug("\nGibbs Sampling")
 
     def balancedPanelPCA(self):
+        parameters = {}
+
         ## -- Balanced Panel: PCA -- ##
         selectM = self.Yvar.columns[:-self.NyQ]
         selectQ = self.Yvar.columns[-self.NyQ:]
 
         FILTER = self.Yvar.ix[:, selectM].apply(lambda x: all(np.isfinite(x)), axis=1)
         Yhat = self.Yvar.ix[FILTER, selectM]
-
         pca = self.stats.PCAfn(X=Yhat)
-
         fhat =  pca.scores[:, 0:self.Nx]
 
+        ## Store factors
         colNames = ["Factor {0:d}".format(ii) for ii in range(1,self.Nx+1)]
         self.fPCA = pd.DataFrame(columns=colNames, data=fhat, index=self.Yvar[FILTER].index)
         self.filterBalance = FILTER
@@ -58,6 +59,7 @@ class dynFAMissing(object):
         ## -- Law of Motion: Factors -- ##
         bbetaFactors, ssigmaFactors = self.stats.varpFunction(Yvar=fhat,  plag=self.plag, constant=False)
         PPhi = bbetaFactors.T
+        parameters["PPhi"] = PPhi
 
         ################
         ## -- Step (1.2) Measurement Equation -- ##
@@ -75,7 +77,7 @@ class dynFAMissing(object):
         self.Yc = Yc
 
         ## -- Monthly Data: Measurement Equation -- ##
-        logging.info("\nOLS Estimate of Monthly parameters")
+        logging.debug("\nOLS Estimate of Monthly parameters")
         llambdaM = np.dot(np.linalg.pinv(fhat), Yc.ix[self.filterBalance, selectM]).T
         if (np.sum(np.isnan(llambdaM)) > 0):
             msg = "Error! llambdaM has NaN values"
@@ -94,9 +96,11 @@ class dynFAMissing(object):
             bb = np.dot(np.linalg.pinv(xx), yy)
             select = np.arange(start=num, step=self.NyM, stop=(self.NyM * self.qlag))
             tthetaM[num, select] = bb.T
+        parameters["tthetaM"] = tthetaM
+
 
         ## -- Quarterly Data: Measurement Equation -- ##
-        logging.info("\nOLS Estimate of Quarterly parameters")
+        logging.debug("\nOLS Estimate of Quarterly parameters")
         Iq = np.array([[1/3., 2/3., 1., 2./3., 1./3.]])
         if (self.pp-5 > 0):
             IQuarterlyFactors  = np.kron( np.concatenate( (Iq, np.zeros(shape=(1, self.pp-5))), axis=1), np.eye(self.Nx))
@@ -121,32 +125,26 @@ class dynFAMissing(object):
         filterQuarter[0:3] = False
         rangeSelect = np.arange(start=0, stop=fhat.shape[0], step=1)
 
-        fGDP = fhat[rangeSelect[filterQuarter]]
+        fGDP = fhat[rangeSelect[filterQuarter.values]]
         for tt in range(1, self.pp):
-            print(fhat[rangeSelect[filterQuarter] - tt])
-            print(rangeSelect[filterQuarter])
-            print(tt)
-            fGDP = np.concatenate((fGDP, fhat[rangeSelect[filterQuarter] - tt]), axis=1)
-        sys.exit(0)
+            fGDP = np.concatenate((fGDP, fhat[rangeSelect[filterQuarter.values] - tt]), axis=1)
+
 
         ## Parameters for Quarterly Data Loadings
-        print("fGDP", fGDP.shape)
-        print("Iq", IQuarterlyFactors.T.shape)
-        print("(fGDP*Iq)^-1", np.linalg.pinv(np.dot(fGDP, IQuarterlyFactors.T)).shape)
-        print("Yq", Yq.shape)
-        print("Yq", Yq[self.filterBalance].shape)
-        print("Yq", Yq[self.filterBalance][filterQuarter].shape)
-        sys.exit(0)
         llambdaQ = np.dot(np.linalg.pinv(np.dot(fGDP, IQuarterlyFactors.T)), Yq[self.filterBalance][filterQuarter]).T
         if (np.sum(np.isnan(llambdaQ)) > 0):
             msg = "Error! llambdaQ has NaN values"
             raise ValueError(msg)
 
+        parameters["llambdaQ"] = llambdaQ
+
         ## Initial Guess of idiosyncratic component: Arbitrary
-        tthetaQ = np.kron(np.ones(shape=(1,self.qlag)), np.eye(self.NyQ)) * 0.6
+        ## Kill persistance...
+        tthetaQ = np.kron(np.ones(shape=(1,self.qlag)), np.eye(self.NyQ)) *0 #* 0.6
+        parameters["tthetaQ"] = tthetaQ
 
         ## -- The State Transition Equation -- ##
-        logging.info("\nFactor transition equation")
+        logging.debug("\nFactor transition equation")
 
         ## -- Monthly Factors -- ##
         Fstate = fhat[self.pp:, :]
@@ -158,10 +156,13 @@ class dynFAMissing(object):
         ## -- The Variance-Covariance Matrix of the states -- ##
         ## -- Innovation Common Component -- ##
         Q = np.diag(np.diag(ssigmaFactors))
+        parameters["Q"] = Q
 
         ## -- Variance-Covariance Idiosyncratic Component -- ##
         HMonthly = np.diag( np.diag( np.cov( residualMonthly, rowvar=0) ) )
-        HQuarterly = np.eye(self.NyQ)*1e-3
+        parameters["HMonthly"] = HMonthly
+        HQuarterly = np.eye(self.NyQ)*1e-3 # OBS: NOT ESTIMATED
+        parameters["HQuarterly"] = HQuarterly
 
         ## Store the parameters
         parameters = {
@@ -176,28 +177,28 @@ class dynFAMissing(object):
             }
 
         C, A, Htilde, Qtilde = self.stateSpaceSystem.stateSpace(parameters=parameters, options=self.options)
-
         Ytilde, self.Ylag = self.stateSpaceSystem.MonthlyLags(Y=self.Yc.values.T, parameters=parameters, options=self.options)
         indexVal = self.Yc.index[self.qlag:]
 
         tt=0
         Tmax = Ytilde.shape[1]
+        runModel = False
         while True:
             if any(np.isfinite(Ytilde[:self.NyM,tt])):
                 TStart = tt
+                runModel = True
                 break
             else:
                 tt +=1
             if (tt > Tmax):
-                logging.info("\nBreak")
                 TStart = None
-                raise ValueError
+                raise ValueError("Break: TStart not found, all NaN")
 
-        if TStart:
+        if runModel:
             loglik, Xhat, Phat = self.stats.kalmanFn(Yvar=Ytilde[:, TStart:], Lmbda=C, H=Htilde, A=A, Q=Qtilde)
         else:
-            logging.error("\nError TStart", TStart, "\nBreak")
-            raise ValueError
+            msg = "\nError TStart {0}\nBreak".format(TStart)
+            raise ValueError(msg)
 
         ## -- Uncertainty -- ##
         fhat = Xhat[0:self.Nx,:]
@@ -209,7 +210,7 @@ class dynFAMissing(object):
             if np.all(np.linalg.eigvals(Phat[:,:,tt]) > 0):
                 Pvar = np.linalg.cholesky(Phat[:,:,tt])
             else:
-                logging.info("\nPhat is not semi-positive definite at t: {0:d}".format(tt))
+                logging.debug("\nPhat is not semi-positive definite at t: {0:d}".format(tt))
                 if np.any(Phat[:,:,tt] < 0):
                     Pvar = np.diag(np.sqrt(np.diag(Phat[:,:,tt])))
                 else:
@@ -228,10 +229,6 @@ class dynFAMissing(object):
         colName = ["Mean", "Low", "High"]
         listVar = list(self.Yvar)
         for num, name in enumerate(listVar):
-            if name != self.Yvar.ix[:,num].name:
-                logging.error("\nError in creating DataFrame")
-                logging.error(num, name, self.Yvar.ix[:,num].name)
-                raise ValueError
             yy = np.concatenate((Yhat[num:num+1,:].T, YhatLow[num:num+1,:].T, YhatHigh[num:num+1,:].T), axis=1)
             Yfit[name] = pd.DataFrame(index=indexVal[TStart:], columns=colName, data=yy)
 

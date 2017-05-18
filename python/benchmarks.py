@@ -113,6 +113,7 @@ class benchmark(object):
 
             filterTT = filterVar & (fcst["forecast_period"] == tt)
             FILTER = filterTT & (fcst["provider"] == "BLP_mean")
+            print("time: {0}\n{1}".format(tt, fcst.ix[FILTER, ["release_date", "value"]].tail(10)))
             ax.plot(fcst.ix[FILTER, "release_date"], fcst.ix[FILTER, "value"], label="Bloomberg Mean Forecast", lw=1, c='g', zorder=10)
 
             ax.plot(nowcastPlot[tt].index, nowcastPlot[tt], label="MSP Nowcast Model", lw=3, c='r', zorder=20)

@@ -3,10 +3,9 @@ import logging
 from datetime import datetime
 import socket
 
+from msp_Logging import mspLog
 if __name__ == "__main__":
-    log_filename = '/repos/Nowcast/logs\\{1:%Y-%m-%d}_MSP_nowcast_logfile_{0:s}.log'.format(socket.gethostname(), datetime.now())
-    FORMAT = '%(asctime)-15s %(funcName)s %(lineno)d %(message)s'
-    logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
+    mspLog(name="msNowcast")
 
 import numpy as np
 import pandas as pd
@@ -41,27 +40,25 @@ class nowcastModel(object):
 
     def runModel(self, model:str="benchmark", saveResults:bool=True):
         ## -- 1) Get the data -- ##
-        logging.info("\nStep (1) Retrieve the data from the MySQL MacroSynergy db")
+        logging.info("Step (1) Retrieve the data from the MySQL MacroSynergy db")
         dataModel, dataPresent, options = self.getData.getModelData(modelID = self.modelID[model])
-        
+
         ## -- 2) Estimate the Dynamic Factor Model -- ##
-        logging.info("\nStep (2) Estimate the model")
+        logging.info("Step (2) Estimate the model")
         self.dfModel = dynFAMissing(Yvar=dataModel, options=options)
 
         ## -- Forecast and Nowcast the variables -- ##
-        logging.info("\nForecast the series")
+        logging.info("Step (3) Forecast the series")
         self.forecast = dfForecast(model=self.dfModel, options=options)
-
-        ## -- Generate the Output -- ##
-        logging.info("\nGenerate the Output")
 
         ## -- Save the Results -- ##
         if saveResults:
-            logging.info("Save Results")
-            self.saveResultsToDb()
+            logging.info("Step (4) Save Results to MySQL")
+            ## OBS ADD Model ID
+            self.saveResultsToDb(modelID = self.modelID[model])
+        logging.info("Step (5) All done for now")
 
     def backTestModel(self, start:datetime.date = datetime.date(datetime(2000, 1, 1))):
-        logging.info("\nBack test the model")
         backTest = backtesting( start = start )
         backTest.runBacktest(data = self.data.dataModel, options=self.data.options)
         ## PASS the history of updates / loop through datasets...
@@ -71,9 +68,9 @@ class nowcastModel(object):
         ## -- Flush all saved forecasts and re-run them all -- ##
         pass
 
-    def saveResultsToDb(self):
-            logging.info("\nSave the results to the MySQL database")
-            self.saveMySQL = insertResultsMySQL(forecast=self.forecast, configPath = self.configPath)
+    def saveResultsToDb(self, modelID:int):
+            logging.info("Save the results to the MySQL database")
+            self.saveMySQL = insertResultsMySQL(forecast=self.forecast, configPath = self.configPath, dev=self.dev, modelID=modelID)
 
     def plotResults(self):
         self.output = outputResults()
@@ -94,6 +91,6 @@ if __name__ == "__main__":
         model.backTestModel()
 
     if True:
-        model.runModel()
+        model.runModel(saveResults=True)
 
     print("\n\nThat is all for now folks\n")
