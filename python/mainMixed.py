@@ -12,6 +12,7 @@ import pandas as pd
 import sys
 import os
 import configparser
+import sqlalchemy
 
 ## 00 Own Modules
 from getData import getData
@@ -38,7 +39,17 @@ class nowcastModel(object):
         for key in config["MODELS"]:
             self.modelID[key] = config["MODELS"].getint(key)
 
-    def runModel(self, model:str="benchmark", saveResults:bool=True):
+        ## -- DATABASE -- ##
+        if self.dev:
+            dbname = "DATABASE_DEV"
+        else:
+            dbname = "DATABASE_UAT"
+        self.user = config[dbname].get("db_user")
+        self.password = config[dbname].get("db_password")
+        self.db_name = config[dbname].get("db_name")
+        self.host = config[dbname].get("db_host")
+
+    def runModel(self, model:str="benchmark", saveResults:bool=True, productionCode:int=3):
         ## -- 1) Get the data -- ##
         logging.info("Step (1) Retrieve the data from the MySQL MacroSynergy db")
         dataModel, dataPresent, options = self.getData.getModelData(modelID = self.modelID[model])
@@ -55,16 +66,39 @@ class nowcastModel(object):
         if saveResults:
             logging.info("Step (4) Save Results to MySQL")
             ## OBS ADD Model ID
-            self.saveMySQL = insertResultsMySQL(forecast=self.forecast, configPath = self.configPath, dev=self.dev, modelID=self.modelID[model])
+            if self.dev:
+                productionCode = 1
+            self.saveMySQL = insertResultsMySQL(forecast=self.forecast, configPath = self.configPath, dev=self.dev, modelID=self.modelID[model], productionCode=productionCode)
         logging.info("Step (5) All done for now")
 
     def backTestModel(self, start:datetime.date = datetime.date(datetime(2000, 1, 1))):
+        ## PRODUCTION CODE = 2
         ## GET RELEASE DATES TO constrain information set from...
         query = "SELECT DISTINCT release_date FROM data WHERE release_date >= '{0:%Y-%m-%d}'".format(start)
+        engine = sqlalchemy.create_engine('mysql+mysqlconnector://{0}:{1}@{2}/{3}'.format(self.user, self.password, self.host, self.db_name))
+        connection = engine.connect()
+        response = connection.execute(query)
+        releaseDates = []
+        for row in response:
+            releaseDates.append(row["release_date"])
+        response.close()
+
+        for release in releaseDates:
+            print(release)
+            query = "SELECT indicator_id, value, period_date, vintage FROM data WHERE release_date = '{0}'".format(release)
+            data= pd.read_sql(sql=query, con=engine)
+            print(data.head())
+            print(data["vintage"].unique())
+
+            #response = connection.execute(query)
+            #print(response.fetchone())
+            #response.close()
+        connection.close()
+
 
         ## for dd in release_dates...
-        backTest = backtesting( start = start )
-        backTest.runBacktest(data = self.data.dataModel, options=self.data.options)
+        #backTest = backtesting( start = start )
+        #backTest.runBacktest(data = self.data.dataModel, options=self.data.options)
         ## PASS the history of updates / loop through datasets...
         ## resultsBacktest = BackTest(Y, datesData, options, variableNames, VarNames, dataPresent)
 
@@ -88,10 +122,10 @@ if __name__ == "__main__":
     print("\nCurrent Work Directory: ", os.getcwd())
     model = nowcastModel(dev=True)
 
-    if False:
+    if True:
         model.backTestModel()
 
-    if True:
+    if False:
         model.runModel(saveResults=True)
 
     print("\n\nThat is all for now folks\n")

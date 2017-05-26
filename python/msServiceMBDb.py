@@ -40,7 +40,7 @@ class msServiceMBDb(win32serviceutil.ServiceFramework):
             raise
 
     def SvcStop(self):
-      #  logging.info("Stopping....")
+        #  logging.info("Stopping....")
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         win32event.SetEvent(self.hWaitStop)
 
@@ -117,23 +117,26 @@ class msServiceMBDb(win32serviceutil.ServiceFramework):
         msg['To'] = receiver
         alternative = "<p>" + message[0] + "</p><h3>Real Data</h3><p>" + message[1] + '''</p><h3><a href=http://mslinuxdb01.macrosynergy.local/#usnaac0169>GDP Forecast</a></h3><p>'''
         alternative += message[2] + "</p><p></p><p>" + message[3]
-        alternative += '''</p> <p> To see the GDP forecast over time see <a href="http://mslinuxdb01.macrosynergy.local/gdp_fcst_evo.html">here</a> </p>''', subtype='html'
-        msg.add_alternative(alternative)
+        alternative += '''</p> <p> To see the GDP forecast over time see <a href="http://mslinuxdb01.macrosynergy.local/gdp_fcst_evo.html">here</a> </p>'''
+        msg.add_alternative(alternative, subtype='html')
 
         server.send_message(msg)
         server.quit()
 
     def LaunchModelScript(self):
-        logging.info("\nInitiate the Model {0}".format(datetime.datetime.now()))
+        logging.info("Initiate the Model {0}".format(datetime.datetime.now()))
 
         ## -- The DFM Now-Casting Model -- ##
-        self.model.runModel()
+        #self.model.runModel()
 
     def SvcDoRun(self):
         logging.info("Checking config")
         self.checkConfig()
-        self.model = nowcastModel()
-      #  logging.info("Starting.....")
+        dev = self.config["SETTINGS"].getboolean("development_mode")
+        logging.info("Run the service in Development Mode: {0}".format(dev))
+        self.model = nowcastModel(dev=dev)
+
+        #  logging.info("Starting.....")
         servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,
                               servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, ''))
         self.timeout = 60000

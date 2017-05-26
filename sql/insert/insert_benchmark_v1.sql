@@ -3,9 +3,9 @@
 -- Now-Casting Model MSP
 
 -- Model ID
-INSERT INTO model_references (model_name, target_country_id, target_indicator_id, model_type, created_by)
+INSERT INTO model_references (model_name, target_country_id, target_variable_id, model_type, created_by)
 VALUES
-    ('ms_dfm_nowcast_v1', 184, 20, 1, 'lsimonsen')
+    ('ms_dfm_nowcast_v1', 184, 39, 1, 'lsimonsen')
 ON duplicate key update model_id = model_id, model_name = model_name;
 
 -- Model Hyper Parameters

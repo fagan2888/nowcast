@@ -12,6 +12,7 @@ import os
 import sys
 import re
 import logging
+import datetime
 
 #sys.path.append(os.getcwd()[:-len("DevelopmentModel\\python\\model")] + "Db\\py\\")
 # Own Modules
@@ -21,14 +22,14 @@ class insertResultsMySQL (msDbInterface):
     __version__ = "0.0.2"
     __name__ = "__insertResultsMySQL__"
 
-    def __init__(self, forecast, modelID:int, configPath = "/repos/Nowcast/config/", dev=False):
+    def __init__(self, forecast, modelID:int, configPath = "/repos/Nowcast/config/", dev=False, productionCode:int=3):
         self.dev = dev
         self.modelID = modelID
         self.configPath = configPath
         self.getConfig()
         ## OBS: Change to SQLAlchemy or MySQLConnector???
         msDbInterface.__init__(self, user=self.user, password=self.password, host=self.host, db_name=self.db_name)
-        self.uploadResults(forecast=forecast)
+        self.uploadResults(forecast=forecast, productionCode=productionCode)
 
     def getConfig(self):
         self.config = configparser.ConfigParser()
@@ -44,7 +45,7 @@ class insertResultsMySQL (msDbInterface):
         msg = "SaveResults to\nUser: {0}, DB Name: {1}, Host: {2}".format(self.user, self.db_name, self.host)
         logging.info(msg)
 
-    def uploadResults(self, forecast, informationSet=None):
+    def uploadResults(self, forecast, informationSet=None, productionCode:int=3):
         ## -- Results: Mean Forecast -- ##
         Yf = forecast.Yf.unstack().reset_index()
         Yf.rename(columns={"level_0": "indicator_id", "level_1": "period_date", 0: "mean_forecast"}, inplace=True)
@@ -98,9 +99,10 @@ class insertResultsMySQL (msDbInterface):
 
         ## OBS NEEDS MODEL ID
         if informationSet:
-            query = "INSERT INTO run_info (run_id, model_id, information_set, svn_repository, svn_revision) VALUES ({0}, {1}, '{2}', '{3}', {4})".format(run_id, self.modelID, informationSet, repository, revision)
+            query = "INSERT INTO run_info (run_id, model_id, run_type, information_set, svn_repository, svn_revision) VALUES ({0}, {1}, {2}, '{3}', '{4}', {5})".format(
+                run_id, self.modelID, productionCode, informationSet, repository, revision)
         else:
-            query = "INSERT INTO run_info (run_id, model_id, svn_repository, svn_revision) VALUES ({0}, {1}, '{2}', {3})".format(run_id, self.modelID, repository, revision)
+            query = "INSERT INTO run_info (run_id, model_id, run_type, svn_repository, svn_revision) VALUES ({0}, {1}, {2}, '{3}', {4})".format(run_id, self.modelID, productionCode, repository, revision)
         self.cursor.execute(query)
         self.cnx.commit()
 

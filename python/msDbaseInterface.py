@@ -91,27 +91,6 @@ class msMBDbInterface(msDbInterface):
            print ("Error retrieving change in indicator updatese:", sys.exc_info()[0])
            raise
 
-    def test(self):
-        query = '''select * from data '''
-        self.cursor.execute(query)
-        tuple = self.cursor.fetchall()
-        print(tuple)
-
-    def test_input(self):
-        try:
-            logging.info("Testing input..... ")
-            query = '''CREATE TABLE IF NOT EXISTS sandbox ( some_id INTEGER NOT NULL AUTO_INCREMENT,
-									    input_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                        some_text  TEXT,
-                                        PRIMARY KEY(some_id))'''
-            self.cursor.execute(query)
-            query = '''INSERT INTO sandbox(some_text) VALUES("FOO")'''
-            self.cursor.execute(query)
-            logging.info("Testing insert")
-            self.cnx.commit()
-        except:
-            raise
-
     def next_release_date(self):
         logging.info("Retrieving next release date")
         query = '''select convert_tz(min(next_release), 'UTC', 'Europe/London') from (select indicator_id,
