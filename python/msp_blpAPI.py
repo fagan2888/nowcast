@@ -94,7 +94,7 @@ class bloombergAPI(object):
         self.fieldNames = fieldNames
         self.countIndex = 0
         ## Bloomberg: ReferenceDataRequest dataset
-        session, refDataSvc = self.startService(service:str="refdata")
+        session, refDataSvc = self.startService(service="refdata")
 
         ## HistoricalDataRequest
         request = refDataSvc.createRequest("HistoricalDataRequest")

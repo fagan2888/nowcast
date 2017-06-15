@@ -168,11 +168,16 @@ class createBloombergForecastDB(object):
 
         # Check whether valid lines....
         blpAPI = bloombergAPI()
-        response = BDP(securitiesNames=candidates["ticker_code"].values, fieldNames=["PX_LAST"])
-        print(response)
+        response = blpAPI.BDP(securitiesNames=candidates["ticker_code"].values, fieldNames=["PX_LAST"])
+        response["PX_LAST"] = response["PX_LAST"].astype(np.float64, inplace=True)
+        candidates = pd.merge(candidates, response, left_on=["ticker_code"], right_index=True, how='left')
+        print(candidates.head())
+        print(candidates.dtypes)
+
+        candidates.loc[np.isfinite(candidates["PX_LAST"]), "upload"] = True
+        print(candidates)
 
         # upload valid tickers
-        #candidates.loc[candidates.index.min(), "upload"] = True
         if any(candidates["upload"]):
             upload = ["('{0[ticker_code]:s}', {0[active]:b}, '{0[target_period]:%Y-%m-%d}', {0[fcst_variable_id]:d}, {0[fcst_source_id]:d}, {0[provider_id]:d}, {0[target_frequency]:d})".format(
                 candidates.loc[index, :]) for index in candidates[candidates["upload"]].index]

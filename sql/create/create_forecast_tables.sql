@@ -1,6 +1,10 @@
 -- Forecast tables
 -- run (5) after 1,2,3,4
 
+DROP TABLE IF EXISTS fcst_data;
+DROP TABLE IF EXISTS fcst_tickers;
+DROP TABLE IF EXISTS fcst_sources;
+DROP TABLE IF EXISTS fcst_variables;
 
 -- Target variables
 CREATE TABLE IF NOT EXISTS fcst_variables (
