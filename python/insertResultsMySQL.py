@@ -81,12 +81,12 @@ class insertResultsMySQL (msDbInterface):
 
         ## -- Update the run_id of the forecast -- ##
         query = """
-            INSERT INTO run_table VALUES ();
+            INSERT INTO output_run_table VALUES ();
             """
         self.cursor.execute(query)
         self.cnx.commit()
 
-        query = """SELECT max(run_id) FROM run_table;"""
+        query = """SELECT max(run_id) FROM output_run_table;"""
         self.cursor.execute(query)
         run_id = self.cursor.fetchall()[0][0]
         # Link run_id to model_id...
@@ -99,10 +99,10 @@ class insertResultsMySQL (msDbInterface):
 
         ## OBS NEEDS MODEL ID
         if informationSet:
-            query = "INSERT INTO run_info (run_id, model_id, run_type, information_set, svn_repository, svn_revision) VALUES ({0}, {1}, {2}, '{3}', '{4}', {5})".format(
+            query = "INSERT INTO output_run_info (run_id, model_id, run_type, information_set, svn_repository, svn_revision) VALUES ({0}, {1}, {2}, '{3}', '{4}', {5})".format(
                 run_id, self.modelID, productionCode, informationSet, repository, revision)
         else:
-            query = "INSERT INTO run_info (run_id, model_id, run_type, svn_repository, svn_revision) VALUES ({0}, {1}, {2}, '{3}', {4})".format(run_id, self.modelID, productionCode, repository, revision)
+            query = "INSERT INTO output_run_info (run_id, model_id, run_type, svn_repository, svn_revision) VALUES ({0}, {1}, {2}, '{3}', {4})".format(run_id, self.modelID, productionCode, repository, revision)
         self.cursor.execute(query)
         self.cnx.commit()
 
@@ -113,11 +113,11 @@ class insertResultsMySQL (msDbInterface):
 
         ## -- Upload the data: Forecasts -- ##
         select = ["indicator_id", "period_date", "forecast_type_id", "run_id", "low_forecast", "mean_forecast", "hi_forecast"]
-        query = "INSERT INTO\n\tforecast_data\n\t(indicator_id, period_date, forecast_type_id, run_id, low_forecast, mean_forecast, hi_forecast)\nVALUES"
-        for ii in Yf.index:
-            query += "\n\t({0[indicator_id]}, '{0[period_date]}', {0[forecast_type_id]}, {0[run_id]}, {0[low_forecast]}, {0[mean_forecast]}, {0[hi_forecast]}),".format(Yf.ix[ii, :])
-        query = query[:-1] + "\n;"
-        self.cursor.execute(query)
+        query = """INSERT INTO output_forecast_data (indicator_id, period_date, forecast_type_id, run_id, low_forecast, mean_forecast, hi_forecast) VALUES (%s, %s, %s, %s, %s, %s, %s);"""
+        Yf['period_date'] = Yf["period_date"].apply(lambda x: datetime.datetime.strftime(datetime.datetime(x.year, x.month, x.day), '%Y-%m-%d'))
+        df_to_tuple = [tuple((row["indicator_id"], row["period_date"], row["forecast_type_id"], row["run_id"], row["low_forecast"], row["mean_forecast"], row["hi_forecast"])) for index, row in Yf.iterrows()]
+        self.cursor.executemany(query, df_to_tuple)
+        #self.cursor.execute(query)
         self.cnx.commit()
 
         ## -- Upload the factors -- ##
@@ -146,9 +146,7 @@ class insertResultsMySQL (msDbInterface):
             msg += "\n{0}".format(Xf[Xf["forecast_type_id"] == 0])
             raise ValueError(msg)
 
-        query = "INSERT INTO\n\tfactors\n\t(factor_id, period_date, forecast_type_id, run_id, factor_value)\nVALUES"
-        for ii in Xf.index:
-            query += "\n\t({0[factor_id]}, '{0[period_date]}', {0[forecast_type_id]}, {0[run_id]}, {0[value]}),".format(Xf.ix[ii, :])
-        query = query[:-1] + "\n;"
-        self.cursor.execute(query)
+        query = "INSERT INTO output_factors (factor_id, period_date, forecast_type_id, run_id, factor_value) VALUES (%s, %s, %s, %s, %s);"
+        df_to_tuple = [tuple((row["factor_id"], '{0:%Y-%m-%d}'.format(row["period_date"]), row["forecast_type_id"], row["run_id"], row["value"])) for index, row in Xf.iterrows()]
+        self.cursor.executemany(query, df_to_tuple)
         self.cnx.commit()

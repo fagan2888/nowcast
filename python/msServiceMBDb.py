@@ -127,11 +127,12 @@ class msServiceMBDb(win32serviceutil.ServiceFramework):
         logging.info("Initiate the Model {0}".format(datetime.datetime.now()))
 
         ## -- The DFM Now-Casting Model -- ##
-        #self.model.runModel()
+        self.model.runModel()
 
     def SvcDoRun(self):
         logging.info("Checking config")
         self.checkConfig()
+
         dev = self.config["SETTINGS"].getboolean("development_mode")
         logging.info("Run the service in Development Mode: {0}".format(dev))
         self.model = nowcastModel(dev=dev)
@@ -177,7 +178,7 @@ class msServiceMBDb(win32serviceutil.ServiceFramework):
                                 self.timeout = 1000 * 60  * 60 * 5# 1s * 60 * 60 = 1hr
                                 data_correct = False
 
-                    if next_release.astimezone(self.tz) < now:
+                    if next_release.astimezone(self.tz) <= now:
                         indicator_updates = mb_up.available_updates()
                     else:
                         # No updates, wait until next release time until checking again.
@@ -216,7 +217,7 @@ class msServiceMBDb(win32serviceutil.ServiceFramework):
                         if (time_diff.total_seconds() * 1000 + error_margin) < self.timeout:
                         		self.timeout = time_diff.total_seconds() * 1000 + error_margin
 
-                        if len([indicator[0] for indicator in indicator_updates if indicator[0].find('usfcst') ]) > 0:
+                        if len([indicator[0] for indicator in indicator_updates if "fcst" not in indicator[0] ]) > 0:
                             self.LaunchModelScript()
                             logging.info("Before email latest run is %s", str(mb_up.return_latest_run_id()))
                             self.indicatorChange(mb_up, indicator_updates)

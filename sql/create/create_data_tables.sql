@@ -1,19 +1,16 @@
 -- Script to create the tables associated with the data
 --- run (2) after create_meta_tables.sql
 
--- Data Sources
+-- Data Providers
 CREATE TABLE IF NOT EXISTS data_sources (
-    source_id           INTEGER NOT NULL,
-    source_name         VARCHAR(60) NOT NULL,
-    source_description  TEXT,
-    PRIMARY KEY         (source_id),
-    UNIQUE KEY          data_sources_ix (source_name)
-    ) ENGINE = INNODB;
-
-
+	source_id        INTEGER NOT NULL,
+	source_name      VARCHAR(40) NOT NULL,
+	source_description TEXT,
+	PRIMARY KEY        (source_id),
+	UNIQUE KEY         data_sources_ix (source_name)
+    ) ENGINE=INNODB;
 
 -- Data Variables
--- DROP TABLE IF EXISTS data_variable_id CASCADE;
 CREATE TABLE IF NOT EXISTS data_variable_id (
 	variable_id             INTEGER NOT NULL,
 	variable_name           VARCHAR(60) NOT NULL,
@@ -37,27 +34,17 @@ CREATE TABLE IF NOT EXISTS data_variable_id (
     ) ENGINE = INNODB;
 
 
--- Data Providers
-CREATE TABLE IF NOT EXISTS data_provider (
-	provider_id        INTEGER NOT NULL AUTO_INCREMENT,
-	provider_name      VARCHAR(25) NOT NULL,
-	provider_long_name TEXT,
-	PRIMARY KEY        (provider_id),
-	UNIQUE KEY         data_provider_ix (provider_name)
-    ) ENGINE=INNODB;
-
-
 -- Data Indicators
--- DROP TABLE IF EXISTS data_indicators;
 CREATE TABLE IF NOT EXISTS data_indicators (
     indicator_id 			INTEGER NOT NULL AUTO_INCREMENT,
 	provider_id 			INTEGER NOT NULL,
 	vendor_key 				VARCHAR (25) NOT NULL,
     variable_id				INTEGER NOT NULL,
+    active                  BOOLEAN DEFAULT TRUE,
 	PRIMARY KEY             (indicator_id),
     UNIQUE KEY              data_indicators_ix (provider_id, vendor_key),
 	CONSTRAINT data_indicators_ibfk_1 FOREIGN KEY (provider_id)
-		REFERENCES data_provider (provider_id) ON DELETE CASCADE,
+		REFERENCES data_sources (source_id) ON DELETE CASCADE,
 	CONSTRAINT data_indicators_ibfk_2 FOREIGN KEY (variable_id)
 		REFERENCES data_variable_id (variable_id) ON DELETE CASCADE
     ) ENGINE=INNODB;

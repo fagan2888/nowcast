@@ -49,6 +49,31 @@ class nowcastModel(object):
         self.db_name = config[dbname].get("db_name")
         self.host = config[dbname].get("db_host")
 
+    def runAllModels(self, saveResults:bool=True, productionCode:int=3):
+        for model in self.modelID.keys():
+            logging.info("Model {0}: {1}".format(model, self.modelID[model]))
+            ## -- 1) Get the data -- ##
+            logging.info("Step (1) Retrieve the data from the MySQL MacroSynergy db")
+            dataModel, dataPresent, options = self.getData.getModelData(modelID = self.modelID[model])
+
+            ## -- 2) Estimate the Dynamic Factor Model -- ##
+            logging.info("Step (2) Estimate the model")
+            self.dfModel = dynFAMissing(Yvar=dataModel, options=options)
+
+            ## -- Forecast and Nowcast the variables -- ##
+            logging.info("Step (3) Forecast the series")
+            self.forecast = dfForecast(model=self.dfModel, options=options)
+
+            ## -- Save the Results -- ##
+            if saveResults:
+                logging.info("Step (4) Save Results to MySQL")
+                ## OBS ADD Model ID
+                if self.dev:
+                    productionCode = 1
+                self.saveMySQL = insertResultsMySQL(forecast=self.forecast, configPath = self.configPath, dev=self.dev, modelID=self.modelID[model], productionCode=productionCode)
+            logging.info("Step (5) All done for now")
+
+
     def runModel(self, model:str="benchmark", saveResults:bool=True, productionCode:int=3):
         ## -- 1) Get the data -- ##
         logging.info("Step (1) Retrieve the data from the MySQL MacroSynergy db")
@@ -122,10 +147,12 @@ if __name__ == "__main__":
     print("\nCurrent Work Directory: ", os.getcwd())
     model = nowcastModel(dev=True)
 
-    if True:
+    if False:
         model.backTestModel()
 
     if False:
-        model.runModel(saveResults=True)
+        model.runModel(saveResults=True, model="harddata")
+    if True:
+        model.runAllModels(saveResults=True)
 
     print("\n\nThat is all for now folks\n")

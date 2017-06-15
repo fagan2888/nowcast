@@ -3,11 +3,10 @@ import logging
 import datetime
 import socket
 
+from msp_Logging import mspLog
 if __name__ == "__main__":
-    now = datetime.datetime.now()
-    log_filename = '/Nowcast/Logs/ms_forecasts_logfile_{0:s}_{1:%Y%m%d}.log'.format(socket.gethostname(), now)
-    FORMAT = '%(asctime)-15s %(funcName)s %(lineno)d %(message)s'
-    logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
+    mspLog(name="msForecasts")
+
 import numpy as np
 import pandas as pd
 import os
@@ -49,9 +48,9 @@ class blpForecasts(object):
         self.host = self.config[dbname].get("db_host")
 
     def getForecastTickers(self):
-        query  = """SELECT\n count(*)\n FROM\n\t information_schema.tables"""
-        query += """\nWHERE\n\t table_schema = '{0}'""".format(self.db_name)
-        query += """\nAND\n\t table_name = '{0}';""".format("blp_fcst_meta")
+        query  = """SELECT\n count(*)\n FROM\n\t information_schema.tables
+            WHERE table_schema = '{0:s}'
+            AND table_name = '{1:s}';""".format(self.db_name, "blp_fcst_meta")
         response = self.engine.execute(query)
         check = response.fetchall()[0]
         if (sum(check) == 0):

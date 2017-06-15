@@ -41,7 +41,7 @@ class dfForecast(object):
         self.model   = model
 
         ## -- Start date of Forecast -- ##
-        FILTER = self.model.Yc.ix[:, -NyQ:].apply(lambda x: all(np.isfinite(x)), axis=1).values
+        FILTER = self.model.Yc.iloc[:, -NyQ:].apply(lambda x: all(np.isfinite(x)), axis=1).values
         self.Tmax = self.model.Yc[FILTER].index.max()
         self.Tnow = self.model.Yc.index.max()
         self.hor = self.options["hor"]
@@ -81,7 +81,7 @@ class dfForecast(object):
             Ytilde = np.dot(C, Xf)
 
             ## -- Dates -- ##
-            datesForecast = self.model.Yc[-Tdelta:].index.values
+            datesForecast = self.model.Yc.iloc[-Tdelta:, :].index.values
             datesStarted = True
         else:
             datesStarted = False
@@ -101,7 +101,7 @@ class dfForecast(object):
                     Ytilde = np.dot(C, Xf[:, -1:])
 
         ## -- Lagged Values -- ##
-        FILTER = self.model.Yc.ix[:, 0:NyM].apply(lambda x: all(np.isfinite(x)), axis=1).values
+        FILTER = self.model.Yc.iloc[:, 0:NyM].apply(lambda x: all(np.isfinite(x)), axis=1).values
         Ylag = self.stateSpaceSystem.revertMonthlyLags(Y=Yobs.values.T, tthetaM=tthetaM, qlag=qlag, NyM=NyM)
 
         dateLags = add_month(dateIn=self.model.Yc[FILTER].index.max())
@@ -110,7 +110,7 @@ class dfForecast(object):
         Yf = pd.DataFrame(columns=list(self.model.Yc), index=datesForecast, dtype=np.float64)
 
         if (Tdelta > 0):
-            Yf.ix[0:Tdelta, :] = np.dot(self.model.Ymean.T, np.ones(shape=(1, Tdelta))).T + Ylag[:,-Tdelta:].T + Ytilde[:,0:Tdelta].T
+            Yf.iloc[0:Tdelta, :] = np.dot(self.model.Ymean.T, np.ones(shape=(1, Tdelta))).T + Ylag[:,-Tdelta:].T + Ytilde[:,0:Tdelta].T
             FILTER = Yf.apply(lambda x: all(np.isfinite(x)), axis=1)
             if np.sum(FILTER) > 0:
                 Tall = Yf[FILTER].index.max()
@@ -124,21 +124,23 @@ class dfForecast(object):
         TyMax = Yobs.index.max()
 
         ## -- Insert the Forecasts, Nowcasts, and Backcasts -- ##
+        columnNames = Yobs.columns
         for tt in Yf[Yf.index > Tall].index:
-            num = Yf[Yf.index <= tt].shape[0]
+            num = Yf.iloc[Yf.index <= tt, :].shape[0]
             logging.debug("tt: {0}, Tlag: {1}, num: {2:d}".format(tt, Tlag, num))
+
             if (Tlag > TyMax):
-                Yobs.loc[Tlag] = Yf.ix[Tlag, :] # np.nan* np.ones(shape=(1,NyM+NyQ))
-            elif any(np.isnan(Yobs.ix[Tlag, 0:NyM])):
-                FILTER = np.isnan(Yobs.ix[Tlag, 0:NyM])
+                Yobs.loc[Tlag, :] = Yf.loc[Tlag, :] # np.nan* np.ones(shape=(1,NyM+NyQ))
+            elif any(np.isnan(Yobs.loc[Tlag, columnNames[0:NyM]])):
+                FILTER = np.isnan(Yobs.loc[Tlag, columnNames[0:NyM]])
                 select = [x for x in FILTER[FILTER].index]
-                Yobs.ix[Tlag, select] = Yf.ix[Tlag, select]
+                Yobs.loc[Tlag, select] = Yf.loc[Tlag, select]
 
             FILTER = (Yobs.index < tt)
             Ylag = self.stateSpaceSystem.revertMonthlyLags(Y=Yobs[FILTER].values.T, tthetaM=tthetaM, qlag=qlag, NyM=NyM)
             yf = self.model.Ymean.T + Ylag[:, -1:] + Ytilde[:, num-1:num]
-            Yf.ix[tt, :] = yf.T
-            if np.sum(np.isnan(Yf.ix[tt, ::].values)) > 0:
+            Yf.loc[tt, :] = yf.T
+            if np.sum(np.isnan(Yf.loc[tt, ::].values)) > 0:
                 raise ValueError("Yf[tt,:] is NaN for {0:%Y-%m-%d}".format(tt))
             Tlag = tt
 

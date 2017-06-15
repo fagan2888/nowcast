@@ -208,7 +208,13 @@ class dynFAMissing(object):
 
         for tt in range(0, Xhat.shape[1]):
             if np.all(np.linalg.eigvals(Phat[:,:,tt]) > 0):
-                Pvar = np.linalg.cholesky(Phat[:,:,tt])
+                try:
+                    Pvar = np.linalg.cholesky(Phat[:,:,tt])
+                except:
+                    if np.any(Phat[:,:,tt] < 0):
+                        Pvar = np.diag(np.sqrt(np.diag(Phat[:,:,tt])))
+                    else:
+                        Pvar = np.sqrt(Phat[:,:,tt])
             else:
                 logging.debug("\nPhat is not semi-positive definite at t: {0:d}".format(tt))
                 if np.any(Phat[:,:,tt] < 0):
