@@ -8,23 +8,24 @@ import socket
 if __name__ == "__main__":
     name = "msBloombergForecastService"
     dev = True
-    path = os.getcwd()
-    if os.path.split(path)[1] != "Nowcast":
-        path = os.path.split(path)[0]
-        if os.path.split(path)[1] != "Nowcast":
-            msg = "Error at {0}".format(path)
+    path = os.path.split(os.getcwd())
+    while True:
+        if path[1] == "Nowcast":
+            break
+        elif "Nowcast" in path[0]:
+            os.chdir(path[0])
+            path = os.path.split(os.getcwd())
+        else:
+            msg = "Error at path: {0}".format(path[0])
             raise ValueError(msg)
     now = datetime.datetime.now()
-
     FORMAT = '%(asctime)-15s %(funcName)s %(lineno)d %(message)s'
     if dev:
         log_filename = path + '\\logs\\{0:%Y-%m-%d}_{1:s}_DEV_logfile_{2:s}.log'.format(now, name, socket.gethostname())
-        logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO, filemode='w')
+        logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
     else:
         log_filename = path + '\\logs\\{0:%Y-%m-%d}_{1:s}_UAT_logfile_{2:s}.log'.format(now, name, socket.gethostname())
         logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
-
-
 
 import time
 import win32serviceutil
@@ -39,7 +40,6 @@ from email.message import EmailMessage
 from email.headerregistry import Address
 import smtplib
 import configparser
-import datetime
 
 ## -- Own Modules -- ##
 from createBloombergForecastDB import createBloombergForecastDB

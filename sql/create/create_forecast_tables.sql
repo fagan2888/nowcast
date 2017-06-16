@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS fcst_variables (
     CONSTRAINT fcst_blp_variable_ibfk_1 FOREIGN KEY(target_variable_id)
 		REFERENCES data_variable_id (variable_id)
     ) ENGINE=INNODB;
+INSERT INTO meta_table_updated (dataset, last_updated) VALUES ('fcst_variables', STR_TO_DATE('1900-01-01', '%Y-%m-%d'));
 
 -- Forecast Providers
 CREATE TABLE IF NOT EXISTS fcst_sources (
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS fcst_sources (
     PRIMARY KEY (fcst_source_code),
     UNIQUE KEY fcst_sources_ix (fcst_source_id)
     ) ENGINE=INNODB;
+INSERT INTO meta_table_updated (dataset, last_updated) VALUES ('fcst_sources', STR_TO_DATE('1900-01-01', '%Y-%m-%d'));
 
 -- active tickers: generate automatically
 CREATE TABLE IF NOT EXISTS fcst_tickers (
@@ -47,15 +49,20 @@ CREATE TABLE IF NOT EXISTS fcst_tickers (
     CONSTRAINT fcst_ticker_ibfk_4 FOREIGN KEY (target_frequency)
         REFERENCES meta_release_frequencies (frequency_id)
     ) ENGINE=INNODB;
-
+INSERT INTO meta_table_updated (dataset, last_updated) VALUES ('fcst_tickers', STR_TO_DATE('1900-01-01', '%Y-%m-%d'));
 
 -- data - to be populated
 CREATE TABLE IF NOT EXISTS fcst_data (
     ticker_id       INTEGER NOT NULL,
     release_date    DATE NOT NULL,
+	latest 			BOOLEAN NOT NULL DEFAULT True,
+	vintage 		INTEGER NOT NULL DEFAULT 1,
+	created_at		TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	changed_at		TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     value           REAL NOT NULL,
-	PRIMARY KEY     (ticker_id, release_date),
-	UNIQUE KEY      fcst_data_ix (ticker_id, release_date),
+	PRIMARY KEY     (ticker_id, release_date, vintage),
+	UNIQUE KEY      fcst_data_ix (ticker_id, release_date, vintage),
     CONSTRAINT fcst_data_ibfk_1 FOREIGN KEY (ticker_id)
         REFERENCES fcst_tickers (ticker_id)
     ) ENGINE=INNODB;
+INSERT INTO meta_table_updated (dataset, last_updated) VALUES ('fcst_data', STR_TO_DATE('1900-01-01', '%Y-%m-%d'));

@@ -33,3 +33,4 @@ DROP TABLE IF EXISTS meta_master_country CASCADE;
 DROP TABLE IF EXISTS meta_presentation_units CASCADE;
 DROP TABLE IF EXISTS meta_release_frequencies CASCADE;
 DROP TABLE IF EXISTS meta_run_type CASCADE;
+DROP TABLE IF EXISTS meta_table_updated CASCADE;

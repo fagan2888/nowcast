@@ -427,3 +427,12 @@ INSERT INTO meta_master_country (country_name, iso_alpha_2, iso_alpha_3, iso_num
     ('Queen Maud Land','AQ','ATA',10),
     ('British Antarctic Territory','AQ','ATA',10)
 ON DUPLICATE KEY UPDATE country_name = country_name, iso_alpha_2 = iso_alpha_2, iso_alpha_3 = iso_alpha_3, iso_number = iso_number;
+
+
+CREATE TABLE IF NOT EXISTS meta_table_updated (
+    dataset_id INTEGER NOT NULL AUTO_INCREMENT,
+    dataset varchar(20) NOT NULL,
+    last_updated DATETIME NOT NULL,
+    PRIMARY KEY (dataset),
+    UNIQUE KEY meta_last_updated_ix (dataset_id)
+    ) ENGINE = INNODB;

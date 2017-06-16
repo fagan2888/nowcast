@@ -73,6 +73,9 @@ class createBloombergForecastDB(object):
             query = "INSERT INTO fcst_variables (fcst_variable_id, fcst_variable_tick, target_variable_id) VALUES\n\t{0:s}\n\t;".format(",\n\t".join(upload))
             engine.execute(query)
 
+            query  = "UPDATE meta_last_updated SET last_updated = '{0:%Y-%m-%d %H:%M}' WHERE dataset = 'fcst_variables';".format(datetime.datetime.now())
+            engine.execute(query)
+
         # 2) fcst_sources
         dtype = {"fcst_source_id":int, "fcst_source_name":str, "fcst_source_code":str}
         fcst_sources = pd.read_excel(io=filename, sheetname="fcst_sources", dtype=dtype)
@@ -99,6 +102,9 @@ class createBloombergForecastDB(object):
         if any(fcst_sources["upload"]):
             upload = ["({0[fcst_source_id]:d}, '{0[fcst_source_name]:s}', '{0[fcst_source_code]:s}')".format(fcst_sources.loc[index, :]) for index in fcst_sources.loc[fcst_sources["upload"], :].index]
             query = "INSERT INTO fcst_sources (fcst_source_id, fcst_source_name, fcst_source_code) VALUES\n\t{0:s}\n\t;".format(",\n\t".join(upload))
+            engine.execute(query)
+
+            query  = "UPDATE meta_last_updated SET last_updated = '{0:%Y-%m-%d %H:%M}' WHERE dataset = 'fcst_sources';".format(datetime.datetime.now())
             engine.execute(query)
 
         # 3) fcst_tickers: own function?
@@ -141,6 +147,7 @@ class createBloombergForecastDB(object):
                             ticker = "{0:4s} Q{1:1d}{2:2d} {3:s} Index".format(variable_tick, qq, yy, source_code)
                         num += 1
                         candidates.loc[num, ["ticker_code", "active", "target_period", "fcst_variable_id", "fcst_source_id", "provider_id", "target_frequency"]] = [ticker, False, target_date, variable_id, source_id, provider, target_frequency]#
+
         # Test candidates - if success, upload...
         candidates["upload"] = False
         dtype["upload"] = bool
@@ -180,16 +187,18 @@ class createBloombergForecastDB(object):
                 candidates.loc[index, :]) for index in candidates[candidates["upload"]].index]
             query = "INSERT INTO fcst_tickers (ticker_code, active, target_period, fcst_variable_id, fcst_source_id, provider_id, target_frequency) VALUES\n\t{0}\n\t;".format(",\n\t".join(upload))
             engine.execute(query)
+            query  = "UPDATE meta_last_updated SET last_updated = '{0:%Y-%m-%d %H:%M}' WHERE dataset = 'fcst_tickers';".format(datetime.datetime.now())
+            engine.execute(query)
 
-        ## Check whether sources are active
-        query = """UPDATE fcst_tickers AS tab1 LEFT JOIN ( SELECT t1.ticker_id,
-        	CASE WHEN t3.period_date IS NULL THEN DATE('1900-01-01') ELSE t3.period_date END AS period_date
-        	FROM fcst_tickers AS t1 LEFT JOIN fcst_variables AS t2 ON t1.fcst_variable_id = t2.fcst_variable_id
-        	LEFT JOIN (SELECT d3.variable_id, max(d1.period_date) AS period_date FROM data_values AS d1
-        	LEFT JOIN data_indicators AS d2 ON d1.indicator_id = d2.indicator_id LEFT JOIN data_variable_id AS d3
-        	ON d2.variable_id = d3.variable_id GROUP BY d3.variable_id) AS t3 ON t2.target_variable_id = t3.variable_id
-            ) AS tab2 ON tab2.ticker_id = tab1.ticker_id SET active = tab1.target_period >= tab2.period_date;"""
-        engine.execute(query)
+            ## Check whether sources are active
+            query = """UPDATE fcst_tickers AS tab1 LEFT JOIN ( SELECT t1.ticker_id,
+            	CASE WHEN t3.period_date IS NULL THEN DATE('1900-01-01') ELSE t3.period_date END AS period_date
+            	FROM fcst_tickers AS t1 LEFT JOIN fcst_variables AS t2 ON t1.fcst_variable_id = t2.fcst_variable_id
+            	LEFT JOIN (SELECT d3.variable_id, max(d1.period_date) AS period_date FROM data_values AS d1
+            	LEFT JOIN data_indicators AS d2 ON d1.indicator_id = d2.indicator_id LEFT JOIN data_variable_id AS d3
+            	ON d2.variable_id = d3.variable_id GROUP BY d3.variable_id) AS t3 ON t2.target_variable_id = t3.variable_id
+                ) AS tab2 ON tab2.ticker_id = tab1.ticker_id SET active = tab1.target_period >= tab2.period_date;"""
+            engine.execute(query)
 
         # 4) fcst_data: download data - own function?
         self.fcstDownloadData(downloadAll=True)
@@ -218,6 +227,7 @@ class createBloombergForecastDB(object):
 
         outputNames = {"PX_LAST": {"name": "value", "dtype": np.float64}}
         fieldNames = list(outputNames)
+        updated = False
         for tick in ticker.index:
             security = [tick]
             startDateObj = ticker.loc[tick, "start_date"]
@@ -226,7 +236,8 @@ class createBloombergForecastDB(object):
                 msg = "Security: {0} - StartDate: {1}".format(security[0], startDate)
                 logging.info(msg)
                 data = blpAPI.BDH(securitiesNames=security, fieldNames=fieldNames, startDate=startDate)
-                if data.shape[0] >0:
+                if data.shape[0] > 0:
+                    updated = True
                     data.rename(columns={"Ticker": "ticker_code", "date": "release_date"}, inplace=True)
                     for key in outputNames.keys():
                         data[key] = data[key].astype(outputNames[key]["dtype"])
@@ -235,6 +246,9 @@ class createBloombergForecastDB(object):
                     upload = ["({0:d}, '{1[release_date]:%Y-%m-%d}', {1[value]:f})".format(ticker_id, data.loc[index, :]) for index in data.index]
                     query = "INSERT INTO fcst_data (ticker_id, release_date, value) VALUES\n\t{0:s}\n\t;".format(",\n\t".join(upload))
                     engine.execute(query)
+        if updated:
+            query  = "UPDATE meta_last_updated SET last_updated = '{0:%Y-%m-%d %H:%M}' WHERE dataset = 'fcst_data';".format(datetime.datetime.now())
+            engine.execute(query)
         logging.info("All done with the downloads of the forecasts")
 
 if __name__ == "__main__":

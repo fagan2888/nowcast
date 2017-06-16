@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS data_variable_id (
     CONSTRAINT data_variable_id_ibfk_4 FOREIGN KEY(source_id)
 		REFERENCES data_sources (source_id)
     ) ENGINE = INNODB;
-
+INSERT INTO meta_table_updated (dataset, last_updated) VALUES ('data_variable_id', STR_TO_DATE('1900-01-01', '%Y-%m-%d'));
 
 -- Data Indicators
 CREATE TABLE IF NOT EXISTS data_indicators (
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS data_indicators (
 	CONSTRAINT data_indicators_ibfk_2 FOREIGN KEY (variable_id)
 		REFERENCES data_variable_id (variable_id) ON DELETE CASCADE
     ) ENGINE=INNODB;
-
+INSERT INTO meta_table_updated (dataset, last_updated) VALUES ('data_indicators', STR_TO_DATE('1900-01-01', '%Y-%m-%d'));
 
 -- Data Values
 -- DROP TABLE IF EXISTS data_values CASCADE;
@@ -68,3 +68,4 @@ CREATE TABLE IF NOT EXISTS data_values (
 		REFERENCES data_indicators (indicator_id) ON DELETE CASCADE
     )
 ENGINE = INNODB;
+INSERT INTO meta_table_updated (dataset, last_updated) VALUES ('data_values', STR_TO_DATE('1900-01-01', '%Y-%m-%d'));
