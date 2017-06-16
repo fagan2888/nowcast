@@ -2,14 +2,31 @@ import os
 import sys
 import datetime
 import logging
-
-from msp_Logging import mspLog
-if __name__ == "__main__":
-    mspLog(name="msBloombergForecastService", dev=True)
-
-import time
 import socket
 
+#from msp_Logging import mspLog
+if __name__ == "__main__":
+    name = "msBloombergForecastService"
+    dev = True
+    path = os.getcwd()
+    if os.path.split(path)[1] != "Nowcast":
+        path = os.path.split(path)[0]
+        if os.path.split(path)[1] != "Nowcast":
+            msg = "Error at {0}".format(path)
+            raise ValueError(msg)
+    now = datetime.datetime.now()
+
+    FORMAT = '%(asctime)-15s %(funcName)s %(lineno)d %(message)s'
+    if dev:
+        log_filename = path + '\\logs\\{0:%Y-%m-%d}_{1:s}_DEV_logfile_{2:s}.log'.format(now, name, socket.gethostname())
+        logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO, filemode='w')
+    else:
+        log_filename = path + '\\logs\\{0:%Y-%m-%d}_{1:s}_UAT_logfile_{2:s}.log'.format(now, name, socket.gethostname())
+        logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
+
+
+
+import time
 import win32serviceutil
 import win32service
 import win32event
@@ -123,11 +140,5 @@ def ctrlHandler(ctrlType):
    return True
 
 if __name__ == '__main__':
-    logging.info("\n\n{0}\n{1:%Y-%m-%d %H:%M}: Call given to file: {2}\n{0}\n".format("-"*50, datetime.datetime.now(), __file__))
-    count = 0
-    for ii in sys.argv:
-        count += 1
-        logging.info("Argument {0:d}: {1:s}".format(count, ii))
-
     win32api.SetConsoleCtrlHandler(ctrlHandler, True)
     win32serviceutil.HandleCommandLine(msServiceBLPforecast)

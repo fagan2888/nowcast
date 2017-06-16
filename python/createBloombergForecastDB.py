@@ -195,6 +195,7 @@ class createBloombergForecastDB(object):
         self.fcstDownloadData(downloadAll=True)
 
     def fcstDownloadData(self, downloadAll:bool=False):
+        logging.info("Get Bloomberg Tickers")
         blpAPI = bloombergAPI()
         engine = sqlalchemy.create_engine('mysql+mysqlconnector://{0}:{1}@{2}/{3}'.format(self.user, self.password, self.host, self.db_name))
 
