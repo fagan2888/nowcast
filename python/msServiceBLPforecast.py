@@ -3,30 +3,6 @@ import sys
 import datetime
 import logging
 import socket
-
-#from msp_Logging import mspLog
-if __name__ == "__main__":
-    name = "msBloombergForecastService"
-    dev = True
-    path = os.path.split(os.getcwd())
-    while True:
-        if path[1] == "Nowcast":
-            break
-        elif "Nowcast" in path[0]:
-            os.chdir(path[0])
-            path = os.path.split(os.getcwd())
-        else:
-            msg = "Error at path: {0}".format(path[0])
-            raise ValueError(msg)
-    now = datetime.datetime.now()
-    FORMAT = '%(asctime)-15s %(funcName)s %(lineno)d %(message)s'
-    if dev:
-        log_filename = path + '\\logs\\{0:%Y-%m-%d}_{1:s}_DEV_logfile_{2:s}.log'.format(now, name, socket.gethostname())
-        logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
-    else:
-        log_filename = path + '\\logs\\{0:%Y-%m-%d}_{1:s}_UAT_logfile_{2:s}.log'.format(now, name, socket.gethostname())
-        logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
-
 import time
 import win32serviceutil
 import win32service
@@ -40,6 +16,20 @@ from email.message import EmailMessage
 from email.headerregistry import Address
 import smtplib
 import configparser
+
+#from msp_Logging import mspLog
+name = "msBloombergForecastService"
+dev = True
+now = datetime.datetime.now()
+FORMAT = '%(asctime)-15s %(funcName)s %(lineno)d %(message)s'
+if dev:
+    log_filename = '/repos/Nowcast/logs/{0:%Y-%m-%d}_{1:s}_DEV_logfile_{2:s}.log'.format(now, name, socket.gethostname())
+    logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
+else:
+    log_filename = '/repos/Nowcast/logs/{0:%Y-%m-%d}_{1:s}_UAT_logfile_{2:s}.log'.format(now, name, socket.gethostname())
+    logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
+
+
 
 ## -- Own Modules -- ##
 from createBloombergForecastDB import createBloombergForecastDB
@@ -125,7 +115,6 @@ class msServiceBLPforecast(win32serviceutil.ServiceFramework):
                     if (now.isoweekday() <= 5):
                         logging.info("Update dataset: Bloomberg Forecasts")
                         self.LaunchModelScript()
-                        self.SvcStop()
                     else:
                         logging.info("Stop for the Weekend at {0:%A %Y-%m-%d %H:%M}".format(now))
 
