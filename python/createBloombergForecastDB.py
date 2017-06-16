@@ -114,7 +114,7 @@ class createBloombergForecastDB(object):
         candidates = pd.DataFrame(columns=list(dtype.keys()))
         target_frequency = frequency.loc[frequency.frequency == "y", "frequency_id"].values[0]
         num = 0
-        for yy in range(17, 18):
+        for yy in range(17, 20):
             for variable_index in fcst_variables.index:
                 variable_tick = fcst_variables.loc[variable_index, "fcst_variable_tick"]
                 variable_id = fcst_variables.loc[variable_index, "fcst_variable_id"]
@@ -171,11 +171,8 @@ class createBloombergForecastDB(object):
         response = blpAPI.BDP(securitiesNames=candidates["ticker_code"].values, fieldNames=["PX_LAST"])
         response["PX_LAST"] = response["PX_LAST"].astype(np.float64, inplace=True)
         candidates = pd.merge(candidates, response, left_on=["ticker_code"], right_index=True, how='left')
-        print(candidates.head())
-        print(candidates.dtypes)
-
         candidates.loc[np.isfinite(candidates["PX_LAST"]), "upload"] = True
-        print(candidates)
+
 
         # upload valid tickers
         if any(candidates["upload"]):
@@ -184,13 +181,62 @@ class createBloombergForecastDB(object):
             query = "INSERT INTO fcst_tickers (ticker_code, active, target_period, fcst_variable_id, fcst_source_id, provider_id, target_frequency) VALUES\n\t{0}\n\t;".format(",\n\t".join(upload))
             engine.execute(query)
 
+        ## Check whether sources are active
+        query = """UPDATE fcst_tickers AS tab1 LEFT JOIN ( SELECT t1.ticker_id,
+        	CASE WHEN t3.period_date IS NULL THEN DATE('1900-01-01') ELSE t3.period_date END AS period_date
+        	FROM fcst_tickers AS t1 LEFT JOIN fcst_variables AS t2 ON t1.fcst_variable_id = t2.fcst_variable_id
+        	LEFT JOIN (SELECT d3.variable_id, max(d1.period_date) AS period_date FROM data_values AS d1
+        	LEFT JOIN data_indicators AS d2 ON d1.indicator_id = d2.indicator_id LEFT JOIN data_variable_id AS d3
+        	ON d2.variable_id = d3.variable_id GROUP BY d3.variable_id) AS t3 ON t2.target_variable_id = t3.variable_id
+            ) AS tab2 ON tab2.ticker_id = tab1.ticker_id SET active = tab1.target_period >= tab2.period_date;"""
+        engine.execute(query)
 
-
-        #= {"ticker_id":str, "active":bool, "target_period":datetime.date, "fcst_variable_id":int, "fcst_source_id":int, "provider_id":int, "target_frequency":int}
         # 4) fcst_data: download data - own function?
+        self.fcstDownloadData(downloadAll=True)
 
+    def fcstDownloadData(self, downloadAll:bool=False):
+        blpAPI = bloombergAPI()
+        engine = sqlalchemy.create_engine('mysql+mysqlconnector://{0}:{1}@{2}/{3}'.format(self.user, self.password, self.host, self.db_name))
 
+        if downloadAll:
+            extra = None
+        else:
+            extra = "\n\tWHERE t1.active = True"
+        query = """SELECT t1.ticker_id, t1.ticker_code,
+            max(CASE
+    		    WHEN t2.release_date IS NULL THEN DATE('1900-01-01')
+                ELSE DATE_ADD(t2.release_date, INTERVAL 1 DAY)
+    	        END) AS start_date
+            FROM
+    	       fcst_tickers AS t1
+            LEFT JOIN
+    	       fcst_data AS t2
+            ON t1.ticker_id = t2.ticker_id{0}
+            GROUP BY t1.ticker_id, t1.ticker_code;""".format(extra)
+        ticker = pd.read_sql(sql=query, con=engine, index_col="ticker_code", parse_dates=["start_date"])
+
+        outputNames = {"PX_LAST": {"name": "value", "dtype": np.float64}}
+        fieldNames = list(outputNames)
+        for tick in ticker.index:
+            security = [tick]
+            startDateObj = ticker.loc[tick, "start_date"]
+            if startDateObj.date() <= datetime.datetime.now().date():
+                startDate = "{0:%Y%m%d}".format(startDateObj)
+                msg = "Security: {0} - StartDate: {1}".format(security[0], startDate)
+                logging.info(msg)
+                data = blpAPI.BDH(securitiesNames=security, fieldNames=fieldNames, startDate=startDate)
+                if data.shape[0] >0:
+                    data.rename(columns={"Ticker": "ticker_code", "date": "release_date"}, inplace=True)
+                    for key in outputNames.keys():
+                        data[key] = data[key].astype(outputNames[key]["dtype"])
+                        data.rename(columns={key:outputNames[key]["name"]}, inplace=True)
+                    ticker_id = ticker.loc[tick, "ticker_id"]
+                    upload = ["({0:d}, '{1[release_date]:%Y-%m-%d}', {1[value]:f})".format(ticker_id, data.loc[index, :]) for index in data.index]
+                    query = "INSERT INTO fcst_data (ticker_id, release_date, value) VALUES\n\t{0:s}\n\t;".format(",\n\t".join(upload))
+                    engine.execute(query)
+        logging.info("All done with the downloads of the forecasts")
 
 if __name__ == "__main__":
     blp = createBloombergForecastDB()
     blp.getForecastTickers()
+    #blp.fcstDownloadData()

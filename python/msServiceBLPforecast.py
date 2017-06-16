@@ -1,12 +1,14 @@
+import os
+import sys
+import datetime
 import logging
+
+from msp_Logging import mspLog
+if __name__ == "__main__":
+    mspLog(name="msBloombergForecastService", dev=True)
+
 import time
 import socket
-
-## -- Set-up log -- ##
-timestr = time.strftime("%Y-%m-%d")
-log_filename = '/Nowcast/Logs/{0:s}_msBloombergForecastService_logfile_{1:s}.log'.format(timestr, socket.gethostname())
-FORMAT = '%(asctime)-15s %(funcName)s %(lineno)d %(message)s'
-logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
 
 import win32serviceutil
 import win32service
@@ -16,8 +18,6 @@ import servicemanager
 import traceback
 import win32com.client
 import getpass
-import os
-import sys
 from email.message import EmailMessage
 from email.headerregistry import Address
 import smtplib
@@ -25,7 +25,7 @@ import configparser
 import datetime
 
 ## -- Own Modules -- ##
-from blpForecasts import blpForecasts
+from createBloombergForecastDB import createBloombergForecastDB
 
 class msServiceBLPforecast(win32serviceutil.ServiceFramework):
     """A service that polls the database checking when the next release date is"""
@@ -49,7 +49,7 @@ class msServiceBLPforecast(win32serviceutil.ServiceFramework):
 
         ## -- The KloFlow Model -- ##
         try:
-            self.forecasts.runDaily()
+            self.forecasts.fcstDownloadData()
         except:
             logging.info("Error running the Bloomberg data program for macro forecasts: {0}".format(traceback.format_exc()))
             self.sendErrorMail(str(traceback.format_exc()))
@@ -85,9 +85,8 @@ class msServiceBLPforecast(win32serviceutil.ServiceFramework):
         logging.info("msBloombergForecastService start modules")
         try:
             logging.info("Run Bloomberg Forecasts Model")
-            self.forecasts = blpForecasts()
+            self.forecasts = createBloombergForecastDB()
             self.LaunchModelScript()
-
         except:
             self.sendErrorMail(str(traceback.format_exc()))
             logging.info("Connection failed with: {0}".format(traceback.format_exc()))
@@ -106,15 +105,14 @@ class msServiceBLPforecast(win32serviceutil.ServiceFramework):
                     logging.info("Opening Forecasts Bloomberg within Service: ")
                     now = datetime.datetime.now()
 
-                    if (now.isoweekday() > 5) | ((now.isoweekday() == 5) & (now.time() > datetime.time(22,0))):
-                        logging.info("Stop for the Weekend at {0:%A %Y-%m-%d %H:%M}".format(now))
+                    if (now.isoweekday() <= 5):
+                        logging.info("Update dataset: Bloomberg Forecasts")
+                        self.LaunchModelScript()
                         self.SvcStop()
+                    else:
+                        logging.info("Stop for the Weekend at {0:%A %Y-%m-%d %H:%M}".format(now))
 
-                    logging.info("Update dataset: Bloomberg Forecasts")
-                    ## OBS: Curde hack
-                    #startDate = "{0:0>4d}{1:0>2d}{2:0>2d}".format(now.year-1, now.month, now.day)
-                    self.LaunchModelScript()
-                    logging.info("Next check will be: {0:%Y-%m-%d %H:%M}".format(now + datetime.timedelta(seconds = (self.timeout * 0.001))) )
+                    logging.info("Next check will be: {0:%Y-%m-%d %H:%M}".format(now + datetime.timedelta(seconds = (self.timeout * 0.001))))
                 except:
                     self.sendErrorMail(str(traceback.format_exc()))
                     logging.info("Connection failed with: {0}".format(traceback.format_exc()))
