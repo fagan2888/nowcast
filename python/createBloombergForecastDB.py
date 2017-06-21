@@ -19,6 +19,7 @@ import argparse
 import calendar
 
 from msp_blpAPI import bloombergAPI
+from fcstPlots import fcstPlots
 
 class createBloombergForecastDB(object):
     def __init__(self, path:str = "/repos/Nowcast/", dev:bool=True):
@@ -249,7 +250,11 @@ class createBloombergForecastDB(object):
         if updated:
             query  = "UPDATE meta_last_updated SET last_updated = '{0:%Y-%m-%d %H:%M}' WHERE dataset = 'fcst_data';".format(datetime.datetime.now())
             engine.execute(query)
-        logging.info("All done with the downloads of the forecasts")
+        logging.info("All done with the downloads of the forecasts - Plot the data")
+
+        fcst = fcstPlots()
+        fcst.getFcstPlots()
+        logging.info("Bloomberg Forecasts plotted and uploaded to Intraweb page")
 
 if __name__ == "__main__":
     blp = createBloombergForecastDB()

@@ -19,7 +19,15 @@ import argparse
 import calendar
 
 import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
+rcParams['axes.labelsize'] = 9
+rcParams['xtick.labelsize'] = 9
+rcParams['ytick.labelsize'] = 9
+rcParams['legend.fontsize'] = 9
+from matplotlib.ticker import MaxNLocator
+my_locater = MaxNLocator(8)
 
 from paramiko import SSHClient
 from paramiko import AutoAddPolicy
@@ -148,6 +156,7 @@ class fcstPlots(object):
                 filename = "/repos/Nowcast/tmp/benchmarks/benchmark-period-lead{0:d}.svg".format(diff)
             plt.savefig(filename, dpi=1000, frameon=False, transparent=True, bbox_inches='tight')
             plt.close()
+        self.transferFiles()
 
     def plotLayout(self, ax, titleName:str, ylabelName:str="$\%$-SAAR"):
         ax.set_title(titleName, fontsize=12)
@@ -191,4 +200,3 @@ class fcstPlots(object):
 if __name__ == "__main__":
     fcst = fcstPlots()
     fcst.getFcstPlots()
-    fcst.transferFiles()
