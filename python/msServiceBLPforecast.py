@@ -33,7 +33,6 @@ else:
 
 ## -- Own Modules -- ##
 from createBloombergForecastDB import createBloombergForecastDB
-from fcstPlots import fcstPlots
 
 class msServiceBLPforecast(win32serviceutil.ServiceFramework):
     """A service that polls the database checking when the next release date is"""
@@ -58,7 +57,6 @@ class msServiceBLPforecast(win32serviceutil.ServiceFramework):
         ## -- The KloFlow Model -- ##
         try:
             self.forecasts.fcstDownloadData()
-            self.fcstPlots.getFcstPlots()
         except:
             logging.info("Error running the Bloomberg data program for macro forecasts: {0}".format(traceback.format_exc()))
             self.sendErrorMail(str(traceback.format_exc()))
@@ -95,8 +93,7 @@ class msServiceBLPforecast(win32serviceutil.ServiceFramework):
         logging.info("msBloombergForecastService start modules")
         try:
             logging.info("Run Bloomberg Forecasts Model")
-            self.forecasts = createBloombergForecastDB()
-            self.fcstPlots = fcstPlots()
+            self.forecasts = createBloombergForecastDB(dev=True)
             self.LaunchModelScript()
         except:
             self.sendErrorMail(str(traceback.format_exc()))

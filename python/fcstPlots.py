@@ -186,12 +186,10 @@ class fcstPlots(object):
 
         filedir = "/repos/Nowcast/tmp/benchmarks/"
         files = os.listdir(filedir)
-        print(type(ssh))
         for ff in files:
             if ".svg" in ff:
                 filename = "{0:s}{1:s}".format(filedir, ff)
                 self.transfer(filepath=filename, ssh=ssh)
-                print(filename)
 
     def transfer(self, filepath:str, ssh:SSHClient):
         with SCPClient(ssh.get_transport()) as scp:

@@ -26,6 +26,7 @@ class createBloombergForecastDB(object):
         logging.info("Initiate the Bloomberg API")
         self.path = path
         self.dev = dev
+        self.fcst = fcstPlots(dev=dev)
 
         ## -- Config File -- ##
         self.getConfig()
@@ -247,13 +248,13 @@ class createBloombergForecastDB(object):
                     upload = ["({0:d}, '{1[release_date]:%Y-%m-%d}', {1[value]:f})".format(ticker_id, data.loc[index, :]) for index in data.index]
                     query = "INSERT INTO fcst_data (ticker_id, release_date, value) VALUES\n\t{0:s}\n\t;".format(",\n\t".join(upload))
                     engine.execute(query)
-        if updated:
-            query  = "UPDATE meta_last_updated SET last_updated = '{0:%Y-%m-%d %H:%M}' WHERE dataset = 'fcst_data';".format(datetime.datetime.now())
-            engine.execute(query)
+        #if updated:
+        #    #query  = "UPDATE meta_last_updated SET last_updated = '{0:%Y-%m-%d %H:%M}' WHERE dataset = 'fcst_data';".format(datetime.datetime.now())
+        #    #engine.execute(query)
         logging.info("All done with the downloads of the forecasts - Plot the data")
 
-        fcst = fcstPlots()
-        fcst.getFcstPlots()
+
+        self.fcst.getFcstPlots()
         logging.info("Bloomberg Forecasts plotted and uploaded to Intraweb page")
 
 if __name__ == "__main__":
