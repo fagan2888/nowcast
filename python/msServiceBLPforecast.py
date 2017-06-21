@@ -33,6 +33,7 @@ else:
 
 ## -- Own Modules -- ##
 from createBloombergForecastDB import createBloombergForecastDB
+from fcstPlots import fcstPlots
 
 class msServiceBLPforecast(win32serviceutil.ServiceFramework):
     """A service that polls the database checking when the next release date is"""
@@ -57,6 +58,7 @@ class msServiceBLPforecast(win32serviceutil.ServiceFramework):
         ## -- The KloFlow Model -- ##
         try:
             self.forecasts.fcstDownloadData()
+            self.fcstPlots.getFcstPlots()
         except:
             logging.info("Error running the Bloomberg data program for macro forecasts: {0}".format(traceback.format_exc()))
             self.sendErrorMail(str(traceback.format_exc()))
@@ -87,12 +89,14 @@ class msServiceBLPforecast(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE, servicemanager.PYS_SERVICE_STARTED, (self._svc_name_, ''))
-        self.timeout = 12 * 1000 * 60 * 60 # 12 hours wait time
+        self.timeout = 3 * 1000 * 60 * 60 # 3 hours wait time
+        self.weekendTimeoutExtra = 0
         logging.info("Starting SvcDoRun with timeout: {0} seconds".format(self.timeout*0.001))
         logging.info("msBloombergForecastService start modules")
         try:
             logging.info("Run Bloomberg Forecasts Model")
             self.forecasts = createBloombergForecastDB()
+            self.fcstPlots = fcstPlots()
             self.LaunchModelScript()
         except:
             self.sendErrorMail(str(traceback.format_exc()))
@@ -102,7 +106,7 @@ class msServiceBLPforecast(win32serviceutil.ServiceFramework):
 
         logging.info("msBloombergForecastService initiated: run SvcDoRun")
         while 1:
-            rc = win32event.WaitForSingleObject(self.hWaitStop, self.timeout)
+            rc = win32event.WaitForSingleObject(self.hWaitStop, self.timeout+self.weekendTimeoutExtra)
             if rc == win32event.WAIT_OBJECT_0:
                 servicemanager.LogInfoMsg("msBloombergForecastService Stopped")
                 break
@@ -115,10 +119,12 @@ class msServiceBLPforecast(win32serviceutil.ServiceFramework):
                     if (now.isoweekday() <= 5):
                         logging.info("Update dataset: Bloomberg Forecasts")
                         self.LaunchModelScript()
+                        self.weekendTimeoutExtra = 0
                     else:
                         logging.info("Stop for the Weekend at {0:%A %Y-%m-%d %H:%M}".format(now))
+                        self.weekendTimeoutExtra = 24 * 1000 * 60 * 60 # 24 hours
 
-                    logging.info("Next check will be: {0:%Y-%m-%d %H:%M}".format(now + datetime.timedelta(seconds = (self.timeout * 0.001))))
+                    logging.info("Next check will be: {0:%Y-%m-%d %H:%M}".format(now + datetime.timedelta(seconds = ((self.timeout +self.weekendTimeoutExtra) * 0.001))))
                 except:
                     self.sendErrorMail(str(traceback.format_exc()))
                     logging.info("Connection failed with: {0}".format(traceback.format_exc()))

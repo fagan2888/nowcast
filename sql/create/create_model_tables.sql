@@ -24,13 +24,13 @@ ON DUPLICATE KEY UPDATE model_type_id = model_type_id, model_type_name = model_t
 
 -- Reference Table
 CREATE TABLE IF NOT EXISTS model_references (
-    model_id    INTEGER NOT NULL AUTO_INCREMENT,
-    model_name  VARCHAR(50) NOT NULL,
+    model_id            INTEGER NOT NULL AUTO_INCREMENT,
+    model_name          VARCHAR(50) NOT NULL,
     target_country_id   INTEGER NOT NULL,
-    target_variable_id INTEGER NOT NULL,
-    model_type  INTEGER,
-    created_by  VARCHAR(50) NOT NULL,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    target_variable_id  INTEGER NOT NULL,
+    model_type          INTEGER,
+    created_by          VARCHAR(50) NOT NULL,
+    created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (model_id),
     UNIQUE KEY  model_references_ix (model_name),
     CONSTRAINT model_references_fk1 FOREIGN KEY (model_type)

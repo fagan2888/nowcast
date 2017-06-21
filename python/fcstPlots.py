@@ -81,8 +81,7 @@ class fcstPlots(object):
         WHERE t3.target_variable_id = 40
         AND t2.target_frequency = 9
         AND t4.fcst_source_id = 0
-        AND t2.active = 1
-        ;"""
+        AND t2.active = 1;"""
         mean = pd.read_sql(sql=query, con=engine)
         mean = mean.pivot(index="release_date", columns="target_period", values="value")
 
@@ -103,8 +102,7 @@ class fcstPlots(object):
         WHERE t3.target_variable_id = 40
         AND t2.target_frequency = 9
         AND t4.fcst_source_id > 0
-        AND t2.active = 1
-        ;"""
+        AND t2.active = 1;"""
         data = pd.read_sql(sql=query, con=engine)
 
         num = 0
@@ -157,6 +155,8 @@ class fcstPlots(object):
             plt.savefig(filename, dpi=1000, frameon=False, transparent=True, bbox_inches='tight')
             plt.close()
         self.transferFiles()
+
+            self.transferFiles()
 
     def plotLayout(self, ax, titleName:str, ylabelName:str="$\%$-SAAR"):
         ax.set_title(titleName, fontsize=12)

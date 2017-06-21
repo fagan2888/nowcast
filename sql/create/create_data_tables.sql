@@ -69,3 +69,14 @@ CREATE TABLE IF NOT EXISTS data_values (
     )
 ENGINE = INNODB;
 INSERT INTO meta_table_updated (dataset, last_updated) VALUES ('data_values', STR_TO_DATE('1900-01-01', '%Y-%m-%d'));
+
+
+
+-- Last updated
+CREATE TABLE IF NOT EXISTS data_last_updated (
+    dataset_id INTEGER NOT NULL AUTO_INCREMENT,
+    dataset varchar(20) NOT NULL,
+    last_updated DATETIME NOT NULL,
+    PRIMARY KEY (dataset),
+    UNIQUE KEY meta_last_updated_ix (dataset_id)
+    ) ENGINE = INNODB;
