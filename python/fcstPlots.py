@@ -156,8 +156,6 @@ class fcstPlots(object):
             plt.close()
         self.transferFiles()
 
-            self.transferFiles()
-
     def plotLayout(self, ax, titleName:str, ylabelName:str="$\%$-SAAR"):
         ax.set_title(titleName, fontsize=12)
 
