@@ -107,7 +107,7 @@ class fcstPlots(object):
 
         num = 0
         ## Check amount of lags...
-        for dd in mean.columns:
+        for count, dd in enumerate(mean.columns):
             FILTER = (data.loc[:, "target_period"] == dd)
             microdata = data.loc[FILTER, :].pivot(columns="fcst_source_code", index="release_date", values="value")
             periods = microdata.index.values
@@ -117,7 +117,7 @@ class fcstPlots(object):
             num += 1
             fig = plt.figure(num)
             ax = fig.add_subplot(111)
-            lines=[]; labels=[];
+            lines=[]; labels=[]
 
             isfinite = np.isfinite(mean.loc[:, dd])
             plt.plot(mean.loc[isfinite, dd].index, mean.loc[isfinite, dd], c='r',label="Bloomberg Average")
@@ -144,14 +144,7 @@ class fcstPlots(object):
             by_label = dict(zip(labels, lines))
             plt.legend(by_label.values(), by_label.keys(), loc = 'lower center', ncol=3, frameon=False, fontsize=9, bbox_to_anchor=(0.5, -0.1), bbox_transform = plt.gcf().transFigure)
             plt.tight_layout()
-            if (dd.month/3 < now.month/3) | (dd.year < now.year):
-                diff = int((now.month/3 - dd.month/3) - (now.year -dd.year)*4)
-                filename = "/repos/Nowcast/tmp/benchmarks/benchmark-period-lag{0:d}.svg".format(diff)
-            elif (dd.month/3 == now.month/3) & (dd.year == now.year):
-                filename = "/repos/Nowcast/tmp/benchmarks/benchmark-period-current.svg"
-            else:
-                diff = int((dd.month/3 - now.month/3) - (dd.year - now.year)*4)
-                filename = "/repos/Nowcast/tmp/benchmarks/benchmark-period-lead{0:d}.svg".format(diff)
+            filename = "/repos/Nowcast/tmp/benchmarks/benchmark-period-{0:d}.svg".format(count+1)
             plt.savefig(filename, dpi=1000, frameon=False, transparent=True, bbox_inches='tight')
             plt.close()
         self.transferFiles()

@@ -29,8 +29,6 @@ else:
     log_filename = '/repos/Nowcast/logs/{0:%Y-%m-%d}_{1:s}_UAT_logfile_{2:s}.log'.format(now, name, socket.gethostname())
     logging.basicConfig(filename = log_filename, format=FORMAT, level = logging.INFO)
 
-
-
 ## -- Own Modules -- ##
 from createBloombergForecastDB import createBloombergForecastDB
 
